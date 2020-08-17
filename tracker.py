@@ -20,7 +20,7 @@ strpos = lambda s, sub: s.find(sub) if s.find(sub) != -1 else False
 def strspn(str1, str2, start=0, length=None):
     if not length:
         length = len(str1)
-    return len(re.search("^[" + str2 + "]*", str1[start: start + length]).group(0))
+    return len(re.search("^[" + str2 + "]*", str1[start : start + length]).group(0))
 
 
 """
@@ -148,7 +148,7 @@ class MatomoTracker:
         self.ip = self.request.get("REMOTE_ADDR", "")
         self.accept_language = self.request.get("HTTP_ACCEPT_LANGUAGE", "")
         self.user_agent = self.request.get("HTTP_USER_AGENT", "")
-        if not api_url:
+        if api_url:
             self.URL = api_url
 
         # Life of the visitor cookie (in sec)
@@ -276,7 +276,7 @@ class MatomoTracker:
         decoded = json.loads(json_encoded)
         if not is_list(decoded):
             raise Exception(
-                "set_attribution_info() is expecting a JSON encoded string, json_encoded given"
+                f"set_attribution_info() is expecting a JSON encoded string, {json_encoded} given"
             )
         self.attributionInfo = decoded
         return self
@@ -328,16 +328,17 @@ class MatomoTracker:
         else:
             if scope != "visit":
                 raise Exception("Invalid 'scope' parameter value")
-        if not self.visitorCustomVar[id]:
+        if self.visitorCustomVar.get(id):
             return self.visitorCustomVar[id]
+
         cookie_decoded = self.get_custom_variables_from_cookie()
         if not is_int(id):
             raise Exception("Parameter to get_custom_variable should be an integer")
         if (
-                not is_list(cookie_decoded)
-                or id not in cookie_decoded
-                or not is_list(cookie_decoded[id])
-                or len(cookie_decoded[id]) != 2
+            not is_list(cookie_decoded)
+            or id not in cookie_decoded
+            or not is_list(cookie_decoded[id])
+            or len(cookie_decoded[id]) != 2
         ):
             return False
 
@@ -382,7 +383,7 @@ class MatomoTracker:
     """
 
     def set_new_visitor_id(self):
-        self.randomVisitorId = uuid.uuid4().hex[0: 0 + self.LENGTH_VISITOR_ID]
+        self.randomVisitorId = uuid.uuid4().hex[: self.LENGTH_VISITOR_ID]
         self.forcedVisitorId = False
         self.cookieVisitorId = False
         return self
@@ -507,7 +508,7 @@ class MatomoTracker:
     """
 
     def enable_cookies(
-            self, domain="", path="/", secure=False, http_only=False, same_site=""
+        self, domain="", path="/", secure=False, http_only=False, same_site=""
     ):
         self.configCookiesDisabled = False
         self.configCookieDomain = self.domain_fixup(domain)
@@ -528,16 +529,8 @@ class MatomoTracker:
     """
 
     def domain_fixup(self, domain):
-        if len(domain) > 0:
-            dl = len(domain) - 1
-            # remove trailing '.'
-            if domain[dl] == ".":
-                domain = domain[0: 0 + dl]
-            # remove leading '*'
-            if domain[0: 0 + 2] == "*.":
-                domain = domain[1:]
-
-        return domain
+        # Remove trailing '.' and leading '*.'
+        return domain.rstrip(".").lstrip("*.")
 
     """
      * Get cookie name with prefix and domain hash
@@ -549,20 +542,20 @@ class MatomoTracker:
         # NOTE: If the cookie name is changed, we must also update the method in matomo.js with the same name.
         hash_string = hashlib.sha1(
             (
-                self.configCookieDomain == self.get_current_host()
-                if ""
+                self.get_current_host()
+                if self.configCookieDomain == ""
                 else self.configCookieDomain
-            )
-            + self.configCookiePath
-        ).hexdigest()[0: 0 + 4]
+            ).encode("utf-8")
+            + self.configCookiePath.encode("utf-8")
+        ).hexdigest()[0 : 0 + 4]
 
         return (
-                self.FIRST_PARTY_COOKIES_PREFIX
-                + cookie_name
-                + "."
-                + self.id_site
-                + "."
-                + hash_string
+            self.FIRST_PARTY_COOKIES_PREFIX
+            + cookie_name
+            + "."
+            + self.id_site
+            + "."
+            + hash_string
         )
 
     """
@@ -574,13 +567,11 @@ class MatomoTracker:
 
     def do_track_page_view(self, document_title):
         self.generate_new_pageview_id()
-
         url = self.get_url_track_page_view(document_title)
-
         return self.send_request(url)
 
     def generate_new_pageview_id(self):
-        self.idPageview = uuid.uuid4().hex[0: 0 + 6]
+        self.idPageview = uuid.uuid4().hex[:6]
 
     """
      * Tracks an event
@@ -594,7 +585,6 @@ class MatomoTracker:
 
     def do_track_event(self, category, action, name="", value=0):
         url = self.get_url_track_event(category, action, name, value)
-
         return self.send_request(url)
 
     """
@@ -607,12 +597,11 @@ class MatomoTracker:
     """
 
     def do_track_content_impression(
-            self, content_name, content_piece="unknown", content_target=""
+        self, content_name, content_piece="unknown", content_target=""
     ):
         url = self.get_url_track_content_impression(
             content_name, content_piece, content_target
         )
-
         return self.send_request(url)
 
     """
@@ -627,7 +616,7 @@ class MatomoTracker:
     """
 
     def do_track_content_interaction(
-            self, interaction, content_name, content_piece="unknown", content_target=""
+        self, interaction, content_name, content_piece="unknown", content_target=""
     ):
         url = self.get_url_track_content_interaction(
             interaction, content_name, content_piece, content_target
@@ -641,14 +630,13 @@ class MatomoTracker:
      *
      * @param string keyword Searched query on the site
      * @param string category (optional) Search engine category if applicable
-     * @param bool|int count_results (optional) results displayed on the search result page. Used to track "zero result" keywords.
+     * @param int count_results (optional) results displayed on the search result page. Used to track "zero result" keywords.
      *
      * @return mixed Response or True if using bulk requests.
     """
 
-    def do_track_site_search(self, keyword, category="", count_results=False):
+    def do_track_site_search(self, keyword, category="", count_results=0):
         url = self.get_url_track_site_search(keyword, category, count_results)
-
         return self.send_request(url)
 
     """
@@ -661,7 +649,6 @@ class MatomoTracker:
 
     def do_track_goal(self, id_goal, revenue=0.0):
         url = self.get_url_track_goal(id_goal, revenue)
-
         return self.send_request(url)
 
     """
@@ -673,9 +660,8 @@ class MatomoTracker:
     """
 
     def do_track_action(self, action_url, action_type):
-        # Referrer could be udpated to be the current URL temporarily (to mimic JS behavior)
+        # Referrer could be updated to be the current URL temporarily (to mimic JS behavior)
         url = self.get_url_track_action(action_url, action_type)
-
         return self.send_request(url)
 
     """
@@ -696,11 +682,10 @@ class MatomoTracker:
     """
 
     def add_ecommerce_item(self, sku, name="", category="", price=0.0, quantity=1):
-        if sku:
+        if not sku:
             raise Exception("You must specify a SKU for the Ecommerce item")
 
         price = self.force_dot_as_separator_for_decimal_point(price)
-
         self.ecommerceItems = [sku, name, category, price, quantity]
         return self
 
@@ -716,7 +701,6 @@ class MatomoTracker:
 
     def do_track_ecommerce_cart_update(self, grand_total):
         url = self.get_url_track_ecommerce_cart_update(grand_total)
-
         return self.send_request(url)
 
     """
@@ -731,13 +715,16 @@ class MatomoTracker:
     def do_bulk_track(self):
         if self.storedTrackingActions:
             raise Exception(
-                "Error:  you must call the def do_track_page_view or do_track_goal from this class, before calling this method do_bulk_track(self):"
+                (
+                    "Error:  you must call the def do_track_page_view or do_track_goal"
+                    " from this class, before calling this method do_bulk_track():"
+                )
             )
 
         data = {"requests": self.storedTrackingActions}
 
         # token_auth is not required by default, except if bulk_requests_require_authentication=1
-        if not self.token_auth:
+        if self.token_auth:
             data["token_auth"] = self.token_auth
 
         post_data = json.dumps(data)
@@ -766,12 +753,11 @@ class MatomoTracker:
     """
 
     def do_track_ecommerce_order(
-            self, order_id, grand_total, sub_total=0.0, tax=0.0, shipping=0.0, discount=0.0
+        self, order_id, grand_total, sub_total=0.0, tax=0.0, shipping=0.0, discount=0.0
     ):
         url = self.get_url_track_ecommerce_order(
             order_id, grand_total, sub_total, tax, shipping, discount
         )
-
         return self.send_request(url)
 
     """
@@ -842,7 +828,6 @@ class MatomoTracker:
     def force_dot_as_separator_for_decimal_point(self, value):
         if value is None or value is False:
             return ""
-
         return str(value).replace(",", ".")
 
     """
@@ -854,7 +839,6 @@ class MatomoTracker:
 
     def get_url_track_ecommerce_cart_update(self, grand_total):
         url = self.get_url_track_ecommerce(grand_total)
-
         return url
 
     """
@@ -865,9 +849,9 @@ class MatomoTracker:
     """
 
     def get_url_track_ecommerce_order(
-            self, order_id, grand_total, sub_total=0.0, tax=0.0, shipping=0.0, discount=0.0
+        self, order_id, grand_total, sub_total=0.0, tax=0.0, shipping=0.0, discount=0.0
     ):
-        if order_id:
+        if not order_id:
             raise Exception("You must specify an order_id for the Ecommerce order")
         url = self.get_url_track_ecommerce(
             grand_total, sub_total, tax, shipping, discount
@@ -887,7 +871,7 @@ class MatomoTracker:
     """
 
     def get_url_track_ecommerce(
-            self, grand_total, sub_total=0.0, tax=0.0, shipping=0.0, discount=0.0
+        self, grand_total, sub_total=0.0, tax=0.0, shipping=0.0, discount=0.0
     ):
         if not is_numeric(grand_total):
             raise Exception(
@@ -927,9 +911,8 @@ class MatomoTracker:
 
     def get_url_track_page_view(self, document_title=""):
         url = self.get_request(self.id_site)
-        if len(document_title) > 0:
+        if document_title:
             url += "&action_name=" + urlencode(document_title)
-
         return url
 
     """
@@ -976,7 +959,7 @@ class MatomoTracker:
     """
 
     def get_url_track_content_impression(
-            self, content_name, content_piece, content_target
+        self, content_name, content_piece, content_target
     ):
         url = self.get_request(self.id_site)
 
@@ -1005,7 +988,7 @@ class MatomoTracker:
     """
 
     def get_url_track_content_interaction(
-            self, interaction, content_name, content_piece, content_target
+        self, interaction, content_name, content_piece, content_target
     ):
         url = self.get_request(self.id_site)
 
@@ -1085,7 +1068,7 @@ class MatomoTracker:
      *
      * Allowed only for Admin/Super User, must be used along with set_token_auth()
      * @see set_token_auth()
-     * @param string date_time Date with the format 'Y-m-d H:i:s', or a UNIX timestamp.
+     * @param string date_time Date with the format '%y-%m-%d %H:%M:%S', or a UNIX timestamp.
      *               If the datetime is older than one day (default value for tracking_requests_require_authentication_when_custom_timestamp_newer_than), then you must call set_token_auth() with a valid Admin/Super user token.
      * @return self
     """
@@ -1130,7 +1113,7 @@ class MatomoTracker:
     """
 
     def set_user_id(self, user_id):
-        if user_id == "":
+        if not user_id:
             raise Exception("User ID cannot be empty.")
         self.user_id = user_id
         return self
@@ -1145,7 +1128,7 @@ class MatomoTracker:
     """
 
     def get_user_id_hashed(self, id):
-        return hashlib.sha1(id).hexdigest()[0: 0 + 16]
+        return hashlib.sha1(id).hexdigest()[:16]
 
     """
      * Forces the requests to be recorded for the specified Visitor ID.
@@ -1162,7 +1145,7 @@ class MatomoTracker:
     def set_visitor_id(self, visitor_id):
         hex_chars = "01234567890abcdefABCDEF"
         if len(visitor_id) != self.LENGTH_VISITOR_ID or strspn(
-                visitor_id, hex_chars
+            visitor_id, hex_chars
         ) != len(visitor_id):
             raise Exception(
                 "set_visitor_id() expects a "
@@ -1187,11 +1170,10 @@ class MatomoTracker:
     """
 
     def get_visitor_id(self):
-        if not self.forcedVisitorId:
+        if self.forcedVisitorId:
             return self.forcedVisitorId
         if self.load_visitor_id_cookie():
             return self.cookieVisitorId
-
         return self.randomVisitorId
 
     """
@@ -1228,7 +1210,7 @@ class MatomoTracker:
 
     def load_visitor_id_cookie(self):
         id_cookie = self.get_cookie_matching_name("id")
-        if id_cookie is False:
+        if not id_cookie:
             return False
         parts = id_cookie.split(".")
         if len(parts[0]) != self.LENGTH_VISITOR_ID:
@@ -1266,7 +1248,7 @@ class MatomoTracker:
     """
 
     def get_attribution_info(self):
-        if not self.attributionInfo:
+        if self.attributionInfo:
             return json.dumps(self.attributionInfo)
 
         return self.get_cookie_matching_name("ref")
@@ -1318,7 +1300,7 @@ class MatomoTracker:
      * Sets if the browser supports cookies
      * This is reported in "List of plugins" report in Matomo.
      *
-     * @param b bool
+     * @param bool b
      * @return self
     """
 
@@ -1352,36 +1334,36 @@ class MatomoTracker:
     """
 
     def set_plugins(
-            self,
-            flash=False,
-            java=False,
-            director=False,
-            quick_time=False,
-            real_player=False,
-            pdf=False,
-            windows_media=False,
-            gears=False,
-            silverlight=False,
+        self,
+        flash=False,
+        java=False,
+        director=False,
+        quick_time=False,
+        real_player=False,
+        pdf=False,
+        windows_media=False,
+        gears=False,
+        silverlight=False,
     ):
         self.plugins = (
-                "&fla="
-                + str(int(flash))
-                + "&java="
-                + str(int(java))
-                + "&dir="
-                + str(int(director))
-                + "&qt="
-                + str(int(quick_time))
-                + "&realp="
-                + str(int(real_player))
-                + "&pdf="
-                + str(int(pdf))
-                + "&wma="
-                + str(int(windows_media))
-                + "&gears="
-                + str(int(gears))
-                + "&ag="
-                + str(int(silverlight))
+            "&fla="
+            + str(int(flash))
+            + "&java="
+            + str(int(java))
+            + "&dir="
+            + str(int(director))
+            + "&qt="
+            + str(int(quick_time))
+            + "&realp="
+            + str(int(real_player))
+            + "&pdf="
+            + str(int(pdf))
+            + "&wma="
+            + str(int(windows_media))
+            + "&gears="
+            + str(int(gears))
+            + "&ag="
+            + str(int(silverlight))
         )
         return self
 
@@ -1428,7 +1410,7 @@ class MatomoTracker:
     """
 
     def set_request_method_non_bulk(self, method):
-        self.request_method = method.upper() == "POST" if "POST" else "GET"
+        self.request_method = "POST" if method.upper() == "POST" else "GET"
         return self
 
     """
@@ -1448,7 +1430,7 @@ class MatomoTracker:
 
     def get_proxy(self):
         if self.proxy and self.proxy_port:
-            return self.proxy + ":" + self.proxy_port
+            return self.proxy + ":" + str(self.proxy_port)
         return None
 
     """
@@ -1482,15 +1464,18 @@ class MatomoTracker:
     """
 
     def get_base_url(self):
-        if self.URL:
+        if not self.URL:
             raise Exception(
-                "You must first set the Matomo Tracker URL by calling MatomoTracker.URL = 'http://your-website.org/matomo/';"
+                (
+                    "You must first set the Matomo Tracker URL by calling "
+                    "MatomoTracker.URL = 'http://your-website.org/matomo/'"
+                )
             )
         if (
-                strpos(self.URL, "/matomo.php") is False
-                and strpos(self.URL, "/proxy-matomo.php") is False
+            strpos(self.URL, "/matomo.php") is False
+            and strpos(self.URL, "/proxy-matomo.php") is False
         ):
-            self.URL = self.URL, "/".rstrip()
+            self.URL = self.URL.rstrip("/")
             self.URL += "/matomo.php"
 
         return self.URL
@@ -1512,120 +1497,114 @@ class MatomoTracker:
             start = "&"
 
         url = (
-                base_url
-                + start
-                + "idsite="
-                + id_site
-                + "&rec=1"
-                + "&apiv="
-                + str(self.VERSION)
-                + "&r="
-                + str(random.randint(0, 2147483647))[2:8]
-                + ("&cip=" + self.ip if self.ip and self.token_auth else "")
-                + ("&uid=" + urlencode(self.user_id) if self.user_id else "")
-                + (
-                    "&cdt=" + urlencode(self.forcedDatetime)
-                    if self.forcedDatetime
-                    else ""
+            base_url
+            + start
+            + "idsite="
+            + id_site
+            + "&rec=1"
+            + "&apiv="
+            + str(self.VERSION)
+            + "&r="
+            + str(random.randint(0, 2147483647))[2:8]
+            + ("&cip=" + self.ip if self.ip and self.token_auth else "")
+            + ("&uid=" + urlencode(self.user_id) if self.user_id else "")
+            + ("&cdt=" + urlencode(self.forcedDatetime) if self.forcedDatetime else "")
+            + ("&new_visit=1" if not self.forcedNewVisit else "")
+            + (
+                "&token_auth=" + urlencode(self.token_auth)
+                if self.token_auth and not self.doBulkRequests
+                else ""
+            )
+            + "&_idts="
+            + str(self.createTs)
+            + "&_idvc="
+            + str(self.visit_count)
+            + ("&_viewts=" + self.lastVisitTs if self.lastVisitTs else "")
+            + (
+                "&_ects=" + urlencode(self.ecommerceLastOrderTimestamp)
+                if self.ecommerceLastOrderTimestamp
+                else ""
+            )
+            + (self.plugins if not self.plugins else "")
+            + (
+                "&h="
+                + self.local_hour
+                + "&m="
+                + self.local_minute
+                + "&s="
+                + self.local_second
+                if self.local_hour and self.local_minute and self.local_second
+                else ""
+            )
+            + (
+                "&res=" + str(self.width) + "x" + str(self.height)
+                if self.width and self.height
+                else ""
+            )
+            + ("&cookie=" + str(self.hasCookies) if self.hasCookies else "")
+            + ("&data=" + self.customData if self.customData else "")
+            + (
+                "&_cvar=" + urlencode(json.dumps(self.visitorCustomVar))
+                if self.visitorCustomVar
+                else ""
+            )
+            + (
+                "&cvar=" + urlencode(json.dumps(self.pageCustomVar))
+                if self.pageCustomVar
+                else ""
+            )
+            + (
+                "&e_cvar=" + urlencode(json.dumps(self.eventCustomVar))
+                if self.eventCustomVar
+                else ""
+            )
+            + (
+                "&gt_ms=" + (str(int(self.generationTime)))
+                if self.generationTime
+                else ""
+            )
+            + (
+                "&cid=" + self.forcedVisitorId
+                if self.forcedVisitorId
+                else "&_id=" + self.get_visitor_id()
+            )
+            + "&url="
+            + urlencode(self.pageUrl)
+            + "&urlref="
+            + urlencode(self.urlReferrer)
+            + (
+                "&cs=" + self.pageCharset
+                if (
+                    self.pageCharset
+                    and self.pageCharset != self.DEFAULT_CHARSET_PARAMETER_VALUES
                 )
-                + ("&new_visit=1" if not self.forcedNewVisit else "")
-                + (
-                    "&token_auth=" + urlencode(self.token_auth)
-                    if self.token_auth and not self.doBulkRequests
-                    else ""
-                )
-                + "&_idts="
-                + str(self.createTs)
-                + "&_idvc="
-                + str(self.visit_count)
-                + ("&_viewts=" + self.lastVisitTs if not self.lastVisitTs else "")
-                + (
-                    "&_ects=" + urlencode(self.ecommerceLastOrderTimestamp)
-                    if self.ecommerceLastOrderTimestamp else ""
-                )
-                + (self.plugins if not self.plugins else "")
-                + (
-                    "&h="
-                    + self.local_hour
-                    + "&m="
-                    + self.local_minute
-                    + "&s="
-                    + self.local_second
-                    if self.local_hour and self.local_minute and self.local_second
-                    else ""
-                )
-                + (
-                    "&res=" + str(self.width) + "x" + str(self.height)
-                    if self.width and self.height else ""
-                )
-                + ("&cookie=" + str(self.hasCookies) if self.hasCookies else "")
-                + ("&data=" + self.customData if not self.customData else "")
-                + (
-                    "&_cvar=" + urlencode(json.dumps(self.visitorCustomVar))
-                    if not self.visitorCustomVar
-                    else ""
-                )
-                + (
-                    "&cvar=" + urlencode(json.dumps(self.pageCustomVar))
-                    if not self.pageCustomVar
-                    else ""
-                )
-                + (
-                    "&e_cvar=" + urlencode(json.dumps(self.eventCustomVar))
-                    if not self.eventCustomVar
-                    else ""
-                )
-                + (
-                    "&gt_ms=" + (str(int(self.generationTime)))
-                    if not self.generationTime
-                    else ""
-                )
-                + (
-                    "&cid=" + self.forcedVisitorId
-                    if not self.forcedVisitorId
-                    else "&_id=" + self.get_visitor_id()
-                )
-                + "&url="
-                + urlencode(self.pageUrl)
-                + "&urlref="
-                + urlencode(self.urlReferrer)
-                + (
-                    "&cs=" + self.pageCharset
-                    if (
-                            self.pageCharset
-                            and self.pageCharset != self.DEFAULT_CHARSET_PARAMETER_VALUES
-                    )
-                    else ""
-                )
-                + ("&pv_id=" + urlencode(self.idPageview) if self.idPageview else "")
-                + (
-                    "&_rcn=" + urlencode(self.attributionInfo[0])
-                    if self.attributionInfo[0]
-                    else ""
-                )
-                + (
-                    "&_rck=" + urlencode(self.attributionInfo[1])
-                    if self.attributionInfo[1]
-                    else ""
-                )
-                + (
-                    "&_refts=" + self.attributionInfo[2]
-                    if self.attributionInfo[2]
-                    else ""
-                )
-                + (
-                    "&_ref=" + urlencode(self.attributionInfo[3])
-                    if not self.attributionInfo[3]
-                    else ""
-                )
-                + ("&country=" + urlencode(self.country) if self.country else "")
-                + ("&region=" + urlencode(self.region) if self.region else "")
-                + ("&city=" + urlencode(self.city) if self.city else "")
-                + ("&lat=" + urlencode(str(self.lat)) if self.lat else "")
-                + ("&long=" + urlencode(str(self.long)) if self.long else "")
-                + custom_fields
-                + ("&send_image=0" if not self.sendImageResponse else "")
-                + self.DEBUG_APPEND_URL
+                else ""
+            )
+            + ("&pv_id=" + urlencode(self.idPageview) if self.idPageview else "")
+            + (
+                "&_rcn=" + urlencode(self.attributionInfo[0])
+                if self.attributionInfo and self.attributionInfo[0]
+                else ""
+            )
+            + (
+                "&_rck=" + urlencode(self.attributionInfo[1])
+                if self.attributionInfo and self.attributionInfo[1]
+                else ""
+            )
+            + ("&_refts=" + self.attributionInfo[2] if self.attributionInfo and self.attributionInfo[2] else "")
+            + (
+                "&_ref=" + urlencode(self.attributionInfo[3])
+                if self.attributionInfo and self.attributionInfo[3]
+                else ""
+            )
+            + ("&country=" + urlencode(self.country) if self.country else "")
+            + ("&region=" + urlencode(self.region) if self.region else "")
+            + ("&city=" + urlencode(self.city) if self.city else "")
+            + ("&lat=" + urlencode(str(self.lat)) if self.lat else "")
+            + ("&long=" + urlencode(str(self.long)) if self.long else "")
+            + custom_fields
+            + ("&send_image=0" if not self.sendImageResponse else "")
+            + self.DEBUG_APPEND_URL
         )
 
         # Reset page level custom variables after this page view
@@ -1647,13 +1626,12 @@ class MatomoTracker:
     """
 
     def get_cookie_matching_name(self, name):
-        if self.configCookiesDisabled:
-            return None
-        if not is_list(self.request.cookie):
+        if self.configCookiesDisabled or not is_list(self.request.cookie):
             return None
         name = self.get_cookie_name(name)
 
-        # Matomo cookie names use dots separators in matomo.js, # but PHP Replaces + with _ http://www.php.net/manual/en/language.variables.predefined.php#72571
+        # Matomo cookie names use dots separators in matomo.js,
+        # but PHP Replaces + with _ http://www.php.net/manual/en/language.variables.predefined.php#72571
         name = name.replace(".", "_")
         for cookie_name, cookie_value in self.request.cookie.items():
             if strpos(cookie_name, name):
@@ -1673,17 +1651,15 @@ class MatomoTracker:
         url = ""
         if self.request.get("PATH_INFO"):
             url = self.request.get("PATH_INFO")
-        else:
-            if self.request.get("REQUEST_URI"):
-                pos = strpos(self.request.get("REQUEST_URI"), "?")
-                if pos:
-                    url = self.request.get("REQUEST_URI")[0: 0 + pos]
-                else:
-                    url = self.request.get("REQUEST_URI")
-        if url and "SCRIPT_NAME" in self.request:
-            url = self.request.get("SCRIPT_NAME")
-        elif url:
-            url = "/"
+        elif self.request.get("REQUEST_URI"):
+            url = self.request.get("REQUEST_URI", "").split("?")[0]
+
+        if not url:
+            # Use if-else instead of get with default to correctly handle empty values
+            if self.request.get("SCRIPT_NAME"):
+                url = self.request.get("SCRIPT_NAME")
+            else:
+                url = "/"
 
         if url and url[0] != "/":
             url = "/" + url
@@ -1700,10 +1676,9 @@ class MatomoTracker:
 
     def get_current_scheme(self):
         if "HTTPS" in self.request and (
-                self.request.get("HTTPS") == "on" or self.request.get("HTTPS")
+            self.request.get("HTTPS") == "on" or self.request.get("HTTPS") is True
         ):
             return "https"
-
         return "http"
 
     """
@@ -1715,10 +1690,7 @@ class MatomoTracker:
     """
 
     def get_current_host(self):
-        if "HTTP_HOST" in self.request:
-            return self.request.get("HTTP_HOST")
-
-        return "unknown"
+        return self.request.get("HTTP_HOST", "unknown")
 
     """
      * If current URL is "http://example.org/dir1/dir2/index.php?param1=value1&param2=value2"
@@ -1730,9 +1702,8 @@ class MatomoTracker:
 
     def get_current_query_string(self):
         url = ""
-        if "QUERY_STRING" in self.request and not self.request.get("QUERY_STRING"):
+        if self.request.get("QUERY_STRING"):
             url += "?" + self.request.get("QUERY_STRING")
-
         return url
 
     """
@@ -1743,12 +1714,14 @@ class MatomoTracker:
     """
 
     def get_current_url(self):
-        return (
-                self.get_current_scheme()
-                + "://"
-                + self.get_current_host()
-                + self.get_current_script_name()
-                + self.get_current_query_string()
+        return "".join(
+            [
+                self.get_current_scheme(),
+                "://",
+                self.get_current_host(),
+                self.get_current_script_name(),
+                self.get_current_query_string(),
+            ]
         )
 
     """
@@ -1766,7 +1739,7 @@ class MatomoTracker:
 
         # Set the 'ref' cookie
         attribution_info = self.get_attribution_info()
-        if not attribution_info:
+        if attribution_info:
             self.set_cookie("ref", attribution_info, self.configReferralCookieTimeout)
 
         # Set the 'ses' cookie
@@ -1775,17 +1748,17 @@ class MatomoTracker:
         # Set the 'id' cookie
         visit_count = self.visit_count + 1
         cookie_value = (
-                self.get_visitor_id()
-                + "."
-                + str(self.createTs)
-                + "."
-                + str(visit_count)
-                + "."
-                + str(self.currentTs)
-                + "."
-                + str(self.lastVisitTs)
-                + "."
-                + str(self.ecommerceLastOrderTimestamp)
+            self.get_visitor_id()
+            + "."
+            + str(self.createTs)
+            + "."
+            + str(visit_count)
+            + "."
+            + str(self.currentTs)
+            + "."
+            + str(self.lastVisitTs)
+            + "."
+            + str(self.ecommerceLastOrderTimestamp)
         )
         self.set_cookie("id", cookie_value, self.configVisitorCookieTimeout)
 
@@ -1810,32 +1783,32 @@ class MatomoTracker:
         cookie_expire = self.currentTs + cookie_ttl
         if not self.headersSent:
             header = (
-                    "Set-Cookie: "
-                    + quote(self.get_cookie_name(cookie_name))
-                    + "="
-                    + quote(cookie_value)
-                    + (
-                        ""
-                        if cookie_expire
-                        else "; expires="
-                             + time.strftime(
-                            "%a, %d %b %Y %H:%M:%S GMT", time.gmtime(cookie_expire)
-                        )
-                             + " GMT"
+                "Set-Cookie: "
+                + quote(self.get_cookie_name(cookie_name))
+                + "="
+                + quote(cookie_value)
+                + (
+                    ""
+                    if cookie_expire
+                    else "; expires="
+                    + time.strftime(
+                        "%a, %d %b %Y %H:%M:%S GMT", time.gmtime(cookie_expire)
                     )
-                    + ("" if self.configCookiePath else "; path=" + self.configCookiePath)
-                    + (
-                        ""
-                        if self.configCookieDomain
-                        else "; domain=" + quote(self.configCookieDomain)
-                    )
-                    + ("" if not self.configCookieSecure else "; secure")
-                    + ("" if not self.configCookieHTTPOnly else "; HttpOnly")
-                    + (
-                        ""
-                        if not self.configCookieSameSite
-                        else "; SameSite=" + quote(self.configCookieSameSite)
-                    )
+                    + " GMT"
+                )
+                + ("" if self.configCookiePath else "; path=" + self.configCookiePath)
+                + (
+                    ""
+                    if self.configCookieDomain
+                    else "; domain=" + quote(self.configCookieDomain, encoding="utf-8")
+                )
+                + ("" if not self.configCookieSecure else "; secure")
+                + ("" if not self.configCookieHTTPOnly else "; HttpOnly")
+                + (
+                    ""
+                    if not self.configCookieSameSite
+                    else "; SameSite=" + quote(self.configCookieSameSite)
+                )
             )
 
             # TODO: "Translation" from PHP. Check how to translate it properly to Python
@@ -1861,7 +1834,7 @@ class MatomoTracker:
      * @param value
     """
 
-    def set_outgoing_tracker_cookie(self, name, value):
+    def set_outgoing_tracker_cookie(self, name, value=None):
         if value is None:
             del self.outgoingTrackerCookies[name]
         else:
@@ -1876,10 +1849,7 @@ class MatomoTracker:
     """
 
     def get_incoming_tracker_cookie(self, name):
-        if name in self.incomingTrackerCookies:
-            return self.incomingTrackerCookies[name]
-
-        return False
+        return self.incomingTrackerCookies.get(name, False)
 
     """
      * Reads incoming tracking server cookies.
@@ -1900,7 +1870,7 @@ class MatomoTracker:
                 cookies = header[header_name_length:].strip()
                 pos_end = strpos(cookies, ";")
                 if pos_end:
-                    cookies = cookies[0: 0 + pos_end]
+                    cookies = cookies[0 : 0 + pos_end]
                 self.incomingTrackerCookies = parse_qs(cookies)
 
 
@@ -1915,7 +1885,6 @@ class MatomoTracker:
 
 def matomo_get_url_track_page_view(request, id_site, document_title=""):
     tracker = MatomoTracker(request, id_site)
-
     return tracker.get_url_track_page_view(document_title)
 
 
@@ -1931,5 +1900,4 @@ def matomo_get_url_track_page_view(request, id_site, document_title=""):
 
 def matomo_get_url_track_goal(request, id_site, id_goal, revenue=0.0):
     tracker = MatomoTracker(request, id_site)
-
     return tracker.get_url_track_goal(id_goal, revenue)
