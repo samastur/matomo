@@ -4,8 +4,17 @@ import json
 import random
 import re
 import time
-from urllib.parse import urlencode, quote, parse_qs
+from urllib.parse import quote, parse_qs, urlencode
 import uuid
+
+
+def urlencode_plus(s):
+    if type(s) == str:
+        return quote(s)
+    elif type(s) == dict:
+        return urlencode(s)
+    else:
+        raise TypeError("urlencode_plus works only on strings and dicts.", s)
 
 #
 # This module is a mostly automated translation of PHP MatomoTracker
@@ -856,7 +865,7 @@ class MatomoTracker:
         url = self.get_url_track_ecommerce(
             grand_total, sub_total, tax, shipping, discount
         )
-        url += "&ec_id=" + urlencode(order_id)
+        url += "&ec_id=" + urlencode_plus(order_id)
         self.ecommerceLastOrderTimestamp = self.get_timestamp()
 
         return url
@@ -896,7 +905,7 @@ class MatomoTracker:
             discount = self.force_dot_as_separator_for_decimal_point(discount)
             url += "&ec_dt=" + discount
         if not self.ecommerceItems:
-            url += "&ec_items=" + urlencode(json.dumps(self.ecommerceItems))
+            url += "&ec_items=" + urlencode_plus(json.dumps(self.ecommerceItems))
         self.ecommerceItems = {}
 
         return url
@@ -912,7 +921,7 @@ class MatomoTracker:
     def get_url_track_page_view(self, document_title=""):
         url = self.get_request(self.id_site)
         if document_title:
-            url += "&action_name=" + urlencode(document_title)
+            url += "&action_name=" + urlencode_plus(document_title)
         return url
 
     """
@@ -936,11 +945,11 @@ class MatomoTracker:
         if len(action) == 0:
             raise Exception("You must specify an Event action (click, view, add...).")
 
-        url += "&e_c=" + urlencode(category)
-        url += "&e_a=" + urlencode(action)
+        url += "&e_c=" + urlencode_plus(category)
+        url += "&e_a=" + urlencode_plus(action)
 
         if len(name) > 0:
-            url += "&e_n=" + urlencode(name)
+            url += "&e_n=" + urlencode_plus(name)
         if value:
             value = self.force_dot_as_separator_for_decimal_point(value)
             url += "&e_v=" + str(value)
@@ -966,12 +975,12 @@ class MatomoTracker:
         if len(content_name) == 0:
             raise Exception("You must specify a content name")
 
-        url += "&c_n=" + urlencode(content_name)
+        url += "&c_n=" + urlencode_plus(content_name)
 
         if not content_piece and len(content_piece) > 0:
-            url += "&c_p=" + urlencode(content_piece)
+            url += "&c_p=" + urlencode_plus(content_piece)
         if not content_target and len(content_target) > 0:
-            url += "&c_t=" + urlencode(content_target)
+            url += "&c_t=" + urlencode_plus(content_target)
 
         return url
 
@@ -998,13 +1007,13 @@ class MatomoTracker:
         if len(content_name) == 0:
             raise Exception("You must specify a content name")
 
-        url += "&c_i=" + urlencode(interaction)
-        url += "&c_n=" + urlencode(content_name)
+        url += "&c_i=" + urlencode_plus(interaction)
+        url += "&c_n=" + urlencode_plus(content_name)
 
         if content_piece and len(content_piece) > 0:
-            url += "&c_p=" + urlencode(content_piece)
+            url += "&c_p=" + urlencode_plus(content_piece)
         if content_target and len(content_target) > 0:
-            url += "&c_t=" + urlencode(content_target)
+            url += "&c_t=" + urlencode_plus(content_target)
 
         return url
 
@@ -1020,9 +1029,9 @@ class MatomoTracker:
 
     def get_url_track_site_search(self, keyword, category, count_results):
         url = self.get_request(self.id_site)
-        url += "&search=" + urlencode(keyword)
+        url += "&search=" + urlencode_plus(keyword)
         if len(category) > 0:
-            url += "&search_cat=" + urlencode(category)
+            url += "&search_cat=" + urlencode_plus(category)
         if not count_results or count_results == 0:
             url += "&search_count=" + str(int(count_results))
 
@@ -1057,7 +1066,7 @@ class MatomoTracker:
 
     def get_url_track_action(self, action_url, action_type):
         url = self.get_request(self.id_site)
-        url += "&" + action_type + "=" + urlencode(action_url)
+        url += "&" + action_type + "=" + urlencode_plus(action_url)
 
         return url
 
@@ -1489,7 +1498,7 @@ class MatomoTracker:
 
         custom_fields = ""
         if not self.customParameters:
-            custom_fields = "&" + urlencode(self.customParameters)
+            custom_fields = "&" + urlencode_plus(self.customParameters)
 
         base_url = self.get_base_url()
         start = "?"
@@ -1507,11 +1516,11 @@ class MatomoTracker:
             + "&r="
             + str(random.randint(0, 2147483647))[2:8]
             + ("&cip=" + self.ip if self.ip and self.token_auth else "")
-            + ("&uid=" + urlencode(self.user_id) if self.user_id else "")
-            + ("&cdt=" + urlencode(self.forcedDatetime) if self.forcedDatetime else "")
+            + ("&uid=" + urlencode_plus(self.user_id) if self.user_id else "")
+            + ("&cdt=" + urlencode_plus(self.forcedDatetime) if self.forcedDatetime else "")
             + ("&new_visit=1" if not self.forcedNewVisit else "")
             + (
-                "&token_auth=" + urlencode(self.token_auth)
+                "&token_auth=" + urlencode_plus(self.token_auth)
                 if self.token_auth and not self.doBulkRequests
                 else ""
             )
@@ -1521,7 +1530,7 @@ class MatomoTracker:
             + str(self.visit_count)
             + ("&_viewts=" + self.lastVisitTs if self.lastVisitTs else "")
             + (
-                "&_ects=" + urlencode(self.ecommerceLastOrderTimestamp)
+                "&_ects=" + urlencode_plus(self.ecommerceLastOrderTimestamp)
                 if self.ecommerceLastOrderTimestamp
                 else ""
             )
@@ -1544,17 +1553,17 @@ class MatomoTracker:
             + ("&cookie=" + str(self.hasCookies) if self.hasCookies else "")
             + ("&data=" + self.customData if self.customData else "")
             + (
-                "&_cvar=" + urlencode(json.dumps(self.visitorCustomVar))
+                "&_cvar=" + urlencode_plus(json.dumps(self.visitorCustomVar))
                 if self.visitorCustomVar
                 else ""
             )
             + (
-                "&cvar=" + urlencode(json.dumps(self.pageCustomVar))
+                "&cvar=" + urlencode_plus(json.dumps(self.pageCustomVar))
                 if self.pageCustomVar
                 else ""
             )
             + (
-                "&e_cvar=" + urlencode(json.dumps(self.eventCustomVar))
+                "&e_cvar=" + urlencode_plus(json.dumps(self.eventCustomVar))
                 if self.eventCustomVar
                 else ""
             )
@@ -1569,9 +1578,9 @@ class MatomoTracker:
                 else "&_id=" + self.get_visitor_id()
             )
             + "&url="
-            + urlencode(self.pageUrl)
+            + urlencode_plus(self.pageUrl)
             + "&urlref="
-            + urlencode(self.urlReferrer)
+            + urlencode_plus(self.urlReferrer)
             + (
                 "&cs=" + self.pageCharset
                 if (
@@ -1580,28 +1589,28 @@ class MatomoTracker:
                 )
                 else ""
             )
-            + ("&pv_id=" + urlencode(self.idPageview) if self.idPageview else "")
+            + ("&pv_id=" + urlencode_plus(self.idPageview) if self.idPageview else "")
             + (
-                "&_rcn=" + urlencode(self.attributionInfo[0])
+                "&_rcn=" + urlencode_plus(self.attributionInfo[0])
                 if self.attributionInfo and self.attributionInfo[0]
                 else ""
             )
             + (
-                "&_rck=" + urlencode(self.attributionInfo[1])
+                "&_rck=" + urlencode_plus(self.attributionInfo[1])
                 if self.attributionInfo and self.attributionInfo[1]
                 else ""
             )
             + ("&_refts=" + self.attributionInfo[2] if self.attributionInfo and self.attributionInfo[2] else "")
             + (
-                "&_ref=" + urlencode(self.attributionInfo[3])
+                "&_ref=" + urlencode_plus(self.attributionInfo[3])
                 if self.attributionInfo and self.attributionInfo[3]
                 else ""
             )
-            + ("&country=" + urlencode(self.country) if self.country else "")
-            + ("&region=" + urlencode(self.region) if self.region else "")
-            + ("&city=" + urlencode(self.city) if self.city else "")
-            + ("&lat=" + urlencode(str(self.lat)) if self.lat else "")
-            + ("&long=" + urlencode(str(self.long)) if self.long else "")
+            + ("&country=" + urlencode_plus(self.country) if self.country else "")
+            + ("&region=" + urlencode_plus(self.region) if self.region else "")
+            + ("&city=" + urlencode_plus(self.city) if self.city else "")
+            + ("&lat=" + urlencode_plus(str(self.lat)) if self.lat else "")
+            + ("&long=" + urlencode_plus(str(self.long)) if self.long else "")
             + custom_fields
             + ("&send_image=0" if not self.sendImageResponse else "")
             + self.DEBUG_APPEND_URL
