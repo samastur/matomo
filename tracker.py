@@ -1521,7 +1521,7 @@ class MatomoTracker:
             + ("&cip=" + self.ip if self.ip and self.token_auth else "")
             + ("&uid=" + urlencode_plus(self.user_id) if self.user_id else "")
             + ("&cdt=" + urlencode_plus(self.forcedDatetime) if self.forcedDatetime else "")
-            + ("&new_visit=1" if not self.forcedNewVisit else "")
+            + ("&new_visit=1" if self.forcedNewVisit else "")
             + (
                 "&token_auth=" + urlencode_plus(self.token_auth)
                 if self.token_auth and not self.doBulkRequests
