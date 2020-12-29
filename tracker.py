@@ -7,6 +7,8 @@ import time
 from urllib.parse import quote, parse_qs, urlencode
 import uuid
 
+import requests
+
 
 def urlencode_plus(s):
     if type(s) == str:
@@ -1167,7 +1169,8 @@ class MatomoTracker:
         return self
 
     """
-     * If the user initiating the request has the Matomo first party cookie, * this def will try and return the ID parsed from this first party cookie (self, found in self.request.cookie):.
+     * If the user initiating the request has the Matomo first party cookie, * this def will try and 
+     * return the ID parsed from this first party cookie (self, found in self.request.cookie):.
      *
      * If you call this def from a server, where the call is triggered by a cron or script
      * not initiated by the actual visitor being tracked, then it will return
@@ -1243,7 +1246,7 @@ class MatomoTracker:
     def delete_cookies(self):
         cookies = ["id", "ses", "cvar", "ref"]
         for cookie in cookies:
-            self.set_cookie(cookie, "", -86400)
+            self.set_cookie(cookie, None, -86400)
 
     """
      * Returns the currently assigned Attribution Information stored in a first party cookie.
@@ -1635,7 +1638,7 @@ class MatomoTracker:
     """
 
     def get_cookie_matching_name(self, name):
-        if self.configCookiesDisabled or not is_list(self.request.cookie):
+        if self.configCookiesDisabled or not self.request.cookie.get_dict():
             return None
         name = self.get_cookie_name(name)
 
@@ -1643,7 +1646,7 @@ class MatomoTracker:
         # but PHP Replaces + with _ http://www.php.net/manual/en/language.variables.predefined.php#72571
         name = name.replace(".", "_")
         for cookie_name, cookie_value in self.request.cookie.items():
-            if strpos(cookie_name, name):
+            if strpos(name, cookie_name):
                 return cookie_value
 
         return None
@@ -1790,40 +1793,11 @@ class MatomoTracker:
 
     def set_cookie(self, cookie_name, cookie_value, cookie_ttl):
         cookie_expire = self.currentTs + cookie_ttl
-        if not self.headersSent:
-            header = (
-                "Set-Cookie: "
-                + quote(self.get_cookie_name(cookie_name))
-                + "="
-                + quote(cookie_value)
-                + (
-                    ""
-                    if cookie_expire
-                    else "; expires="
-                    + time.strftime(
-                        "%a, %d %b %Y %H:%M:%S GMT", time.gmtime(cookie_expire)
-                    )
-                    + " GMT"
-                )
-                + ("" if self.configCookiePath else "; path=" + self.configCookiePath)
-                + (
-                    ""
-                    if self.configCookieDomain
-                    else "; domain=" + quote(self.configCookieDomain, encoding="utf-8")
-                )
-                + ("" if not self.configCookieSecure else "; secure")
-                + ("" if not self.configCookieHTTPOnly else "; HttpOnly")
-                + (
-                    ""
-                    if not self.configCookieSameSite
-                    else "; SameSite=" + quote(self.configCookieSameSite)
-                )
-            )
-
-            # TODO: "Translation" from PHP. Check how to translate it properly to Python
-            # header(header, False)
-            self.headersSent = True
+        self.request.cookie.set(cookie_name, cookie_value, expires=cookie_expire)
         return self
+
+    def get_cookies(self):
+        return self.request.cookie
 
     """
      * @return bool|mixed

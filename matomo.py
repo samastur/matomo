@@ -68,11 +68,17 @@ class Matomo(MatomoTracker):
             "accept-language": self.accept_language,
         }
 
+        cookies = self.get_cookies()
+
         # TODO Missing certificate section
 
         if method == "GET":
             response = requests.get(
-                url, headers=headers, proxies=proxies, timeout=self.requestTimeout
+                url,
+                headers=headers,
+                proxies=proxies,
+                timeout=self.requestTimeout,
+                cookies=cookies,
             )
         elif method == "POST":
             response = requests.post(
@@ -81,6 +87,7 @@ class Matomo(MatomoTracker):
                 headers=headers,
                 proxies=proxies,
                 timeout=self.requestTimeout,
+                cookies=cookies
             )
         else:
             raise Exception(f"Unsupported HTTP method: {method}")

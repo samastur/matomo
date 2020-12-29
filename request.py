@@ -1,5 +1,6 @@
 import collections
+import requests
 
 
 class Request(collections.UserDict):
-    cookie = {}
+    cookie = requests.cookies.RequestsCookieJar()
