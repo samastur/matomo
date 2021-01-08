@@ -2,3 +2,7 @@
 *.pyc
 __pycache__/
 translate.py
+
+src/matomo.egg-info/
+build/
+dist/

@@ -2,7 +2,7 @@ import json
 from urllib.parse import urlencode, parse_qs
 import requests
 
-from tracker import MatomoTracker
+from .tracker import MatomoTracker
 
 
 """
