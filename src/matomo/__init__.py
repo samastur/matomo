@@ -39,6 +39,7 @@ class Matomo(MatomoTracker):
                 ),
             )
             self.clear_custom_variables()
+            self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
             self.user_agent = ""
             self.accept_language = ""

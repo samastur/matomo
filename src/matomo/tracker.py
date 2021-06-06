@@ -7,8 +7,6 @@ import time
 from urllib.parse import quote, parse_qs, urlencode
 import uuid
 
-import requests
-
 
 def urlencode_plus(s):
     if type(s) == str:
@@ -100,14 +98,6 @@ class MatomoTracker:
     FIRST_PARTY_COOKIES_PREFIX = "_pk_"
 
     """
-     * Ecommerce item page view tracking stores item's metadata in these Custom Variables slots.
-    """
-    CVAR_INDEX_ECOMMERCE_ITEM_PRICE = 2
-    CVAR_INDEX_ECOMMERCE_ITEM_SKU = 3
-    CVAR_INDEX_ECOMMERCE_ITEM_NAME = 4
-    CVAR_INDEX_ECOMMERCE_ITEM_CATEGORY = 5
-
-    """
      * Defines how many categories can be used max when calling add_ecommerce_item().
      * @var int
     """
@@ -132,9 +122,16 @@ class MatomoTracker:
         self.eventCustomVar = {}
         self.forcedDatetime = ""
         self.forcedNewVisit = False
-        self.generationTime = 0
+        self.networkTime = 0
+        self.serverTime = 0
+        self.transferTime = 0
+        self.domProcessingTime = 0
+        self.domCompletionTime = 0
+        self.onLoadTime = 0
         self.pageCustomVar = {}
+        self.ecommerceView = {}
         self.customParameters = {}
+        self.customDimensions = {}
         self.customData = ""
         self.hasCookies = False
         self.token_auth = ""
@@ -189,10 +186,6 @@ class MatomoTracker:
 
         self.currentTs = time.time()
         self.createTs = self.currentTs
-        self.visit_count = 0
-        self.currentVisitTs = ""
-        self.lastVisitTs = ""
-        self.ecommerceLastOrderTimestamp = ""
 
         # Allow debug while blocking the request
         self.requestTimeout = 600
@@ -248,15 +241,49 @@ class MatomoTracker:
         return self
 
     """
-     * Sets the time that generating the document on the server side took.
+     * This method is deprecated and does nothing. It used to set the time that it took to generate the document on the server side.
      *
      * @param int time_ms Generation time in ms
      * @return self
+     *
+     * @deprecated this metric is deprecated please use performance timings instead
+     * @see setPerformanceTimings
     """
 
     def set_generation_time(self, time_ms):
-        self.generationTime = time_ms
         return self
+
+    """
+     * Sets timings for various browser performance metrics.
+     * @see https://developer.mozilla.org/en-US/docs/Web/API/PerformanceTiming
+     *
+     * @param int network Network time in ms (connectEnd – fetchStart)
+     * @param int server Server time in ms (responseStart – requestStart)
+     * @param int transfer Transfer time in ms (responseEnd – responseStart)
+     * @param int domProcessing DOM Processing to Interactive time in ms (domInteractive – domLoading)
+     * @param int domCompletion DOM Interactive to Complete time in ms (domComplete – domInteractive)
+     * @param int onload Onload time in ms (loadEventEnd – loadEventStart)
+     * @return $this
+    """
+    def set_performance_timings(self, network=0, server=0, transfer=0, domProcessing=0, domCompletion=0, onLoad=0):
+        self.networkTime = network
+        self.serverTime = server
+        self.transferTime = transfer
+        self.domProcessingTime = domProcessing
+        self.domCompletionTime = domCompletion
+        self.onLoadTime = onLoad
+        return self
+
+    """
+     * Clear / reset all previously set performance metrics.
+    """
+    def clear_performance_timings(self):
+        self.networkTime = 0
+        self.serverTime = 0
+        self.transferTime = 0
+        self.domProcessingTime = 0
+        self.domCompletionTime = 0
+        self.onLoadTime = 0
 
     """
      * @deprecated
@@ -367,17 +394,49 @@ class MatomoTracker:
         self.eventCustomVar = {}
 
     """
+     * Sets a specific custom dimension
+     *
+     * @param int id id of custom dimension
+     * @param str value value for custom dimension
+     * @return self
+    """
+    def set_custom_dimension(self, id, value):
+        self.customDimensions[f"dimension{id}"] = value
+        return self
+
+    """
+     * Clears all previously set custom dimensions
+    """
+    def clear_custom_dimensions(self):
+        self.customDimensions = {}
+
+    """
+     * Returns the value of the custom dimension with the given id
+     *
+     * @param int id id of custom dimension
+     * @return str|None
+    """
+    def get_custom_dimension(self, id):
+        return self.customDimensions.get(f"dimension{id}", None)
+
+    """
      * Sets a custom tracking parameter. This is useful if you need to send any tracking parameters for a 3rd party
      * plugin that is not shipped with Matomo itself. Please note that custom parameters are cleared after each
      * tracking request.
      *
-     * @param string tracking_api_parameter The name of the tracking API parameter, eg 'dimension1'
+     * @param string tracking_api_parameter The name of the tracking API parameter, eg 'bw_bytes'
      * @param string value Tracking parameter value that shall be sent for this tracking parameter.
      * @return self
      * @throws Exception
     """
-
     def set_custom_tracking_parameter(self, tracking_api_parameter, value):
+        regex = re.compile('/^dimension([0-9]+)$/')
+        matches = re.findall(regex, tracking_api_parameter)
+        if len(matches):
+            # Unlike PHP preg_match it returns captured subpattern as first element
+            self.set_custom_dimension(matches[0], value)
+            return self
+
         self.customParameters[tracking_api_parameter] = value
         return self
 
@@ -789,8 +848,6 @@ class MatomoTracker:
      * Sets the current page view as an item (product) page view, or an Ecommerce Category page view.
      *
      * This must be called before do_track_page_view() on this product/category page.
-     * It will set 3 custom variables of scope "page" with the SKU, Name and Category for this page view.
-     * Note: Custom Variables of scope "page" slots 3, 4 and 5 will be used.
      *
      * On a category page, you may set the parameter category only and set the other parameters to False.
      *
@@ -806,26 +863,27 @@ class MatomoTracker:
     """
 
     def set_ecommerce_view(self, sku="", name="", category="", price=0.0):
+        self.ecommerceView = {}
         if not category:
             if is_list(category):
                 category = json.dumps(category)
         else:
             category = ""
-        self.pageCustomVar[self.CVAR_INDEX_ECOMMERCE_ITEM_CATEGORY] = ["_pkc", category]
+        self.ecommerceView["_pkc"] = category
 
         if not price:
             price = str(float(price))
             price = self.force_dot_as_separator_for_decimal_point(price)
-            self.pageCustomVar[self.CVAR_INDEX_ECOMMERCE_ITEM_PRICE] = ["_pkp", price]
+            self.ecommerceView["_pkp"] = price
 
         # On a category page, do not record "Product name not defined"
         if sku and name:
             return self
         if not sku:
-            self.pageCustomVar[self.CVAR_INDEX_ECOMMERCE_ITEM_SKU] = ["_pks", sku]
+            self.ecommerceView["_pks"] = sku
         if name:
             name = ""
-        self.pageCustomVar[self.CVAR_INDEX_ECOMMERCE_ITEM_NAME] = ["_pkn", name]
+        self.ecommerceView["_pkn"] = name
         return self
 
     """
@@ -868,7 +926,6 @@ class MatomoTracker:
             grand_total, sub_total, tax, shipping, discount
         )
         url += "&ec_id=" + urlencode_plus(order_id)
-        self.ecommerceLastOrderTimestamp = self.get_timestamp()
 
         return url
 
@@ -1227,16 +1284,11 @@ class MatomoTracker:
         parts = id_cookie.split(".")
         if len(parts[0]) != self.LENGTH_VISITOR_ID:
             return False
+
         """ self.cookieVisitorId provides backward compatibility since get_visitor_id()
         didn't change any existing VisitorId value"""
         self.cookieVisitorId = parts[0]
         self.createTs = parts[1]
-        self.visit_count = str(int(parts[2]))
-        self.currentVisitTs = parts[3]
-        self.lastVisitTs = parts[4]
-        if len(parts) > 5:
-            self.ecommerceLastOrderTimestamp = parts[5]
-
         return True
 
     """
@@ -1335,12 +1387,10 @@ class MatomoTracker:
      *
      * @param bool flash
      * @param bool java
-     * @param bool director
      * @param bool quick_time
      * @param bool real_player
      * @param bool pdf
      * @param bool windows_media
-     * @param bool gears
      * @param bool silverlight
      * @return self
     """
@@ -1349,12 +1399,10 @@ class MatomoTracker:
         self,
         flash=False,
         java=False,
-        director=False,
         quick_time=False,
         real_player=False,
         pdf=False,
         windows_media=False,
-        gears=False,
         silverlight=False,
     ):
         self.plugins = (
@@ -1362,8 +1410,6 @@ class MatomoTracker:
             + str(int(flash))
             + "&java="
             + str(int(java))
-            + "&dir="
-            + str(int(director))
             + "&qt="
             + str(int(quick_time))
             + "&realp="
@@ -1372,8 +1418,6 @@ class MatomoTracker:
             + str(int(pdf))
             + "&wma="
             + str(int(windows_media))
-            + "&gears="
-            + str(int(gears))
             + "&ag="
             + str(int(silverlight))
         )
@@ -1500,8 +1544,12 @@ class MatomoTracker:
         self.set_first_party_cookies()
 
         custom_fields = ""
-        if not self.customParameters:
+        if self.customParameters:
             custom_fields = "&" + urlencode_plus(self.customParameters)
+
+        custom_dimensions = ""
+        if self.customDimensions:
+            custom_dimensions = "&" + urlencode_plus(self.customDimensions)
 
         base_url = self.get_base_url()
         start = "?"
@@ -1522,21 +1570,8 @@ class MatomoTracker:
             + ("&uid=" + urlencode_plus(self.user_id) if self.user_id else "")
             + ("&cdt=" + urlencode_plus(self.forcedDatetime) if self.forcedDatetime else "")
             + ("&new_visit=1" if self.forcedNewVisit else "")
-            + (
-                "&token_auth=" + urlencode_plus(self.token_auth)
-                if self.token_auth and not self.doBulkRequests
-                else ""
-            )
             + "&_idts="
             + str(self.createTs)
-            + "&_idvc="
-            + str(self.visit_count)
-            + ("&_viewts=" + self.lastVisitTs if self.lastVisitTs else "")
-            + (
-                "&_ects=" + urlencode_plus(self.ecommerceLastOrderTimestamp)
-                if self.ecommerceLastOrderTimestamp
-                else ""
-            )
             + (self.plugins if not self.plugins else "")
             + (
                 "&h="
@@ -1568,11 +1603,6 @@ class MatomoTracker:
             + (
                 "&e_cvar=" + urlencode_plus(json.dumps(self.eventCustomVar))
                 if self.eventCustomVar
-                else ""
-            )
-            + (
-                "&gt_ms=" + (str(int(self.generationTime)))
-                if self.generationTime
                 else ""
             )
             + (
@@ -1615,13 +1645,30 @@ class MatomoTracker:
             + ("&lat=" + urlencode_plus(str(self.lat)) if self.lat else "")
             + ("&long=" + urlencode_plus(str(self.long)) if self.long else "")
             + custom_fields
+            + custom_dimensions
             + ("&send_image=0" if not self.sendImageResponse else "")
             + self.DEBUG_APPEND_URL
         )
 
+        if self.idPageview:
+            url += (
+                ("&pf_net=" + str(self.networkTime) if self.networkTime else "")
+                + ("&pf_srv=" + str(self.serverTime) if self.serverTime else "")
+                + ("&pf_tfr=" + str(self.transferTime) if self.transferTime else "")
+                + ("&pf_dm1=" + str(self.domProcessingTime) if self.domProcessingTime else "")
+                + ("&pf_dm2=" + str(self.domCompletionTime) if self.domCompletionTime else "")
+                + ("&pf_onl=" + str(self.onLoadTime) if self.onLoadTime else "")
+            )
+            self.clear_performance_timings()
+
+        for key in self.ecommerceView:
+            url += "&" + key + "=" + urlencode_plus(self.ecommerceView[key])
+
         # Reset page level custom variables after this page view
+        self.ecommerceView = {}
         self.pageCustomVar = {}
         self.eventCustomVar = {}
+        self.clear_custom_dimensions()
         self.clear_custom_tracking_parameters()
 
         # force new visit only once, user must call again set_force_new_visit()
@@ -1758,19 +1805,10 @@ class MatomoTracker:
         self.set_cookie("ses", "*", self.configSessionCookieTimeout)
 
         # Set the 'id' cookie
-        visit_count = self.visit_count + 1
         cookie_value = (
             self.get_visitor_id()
             + "."
             + str(self.createTs)
-            + "."
-            + str(visit_count)
-            + "."
-            + str(self.currentTs)
-            + "."
-            + str(self.lastVisitTs)
-            + "."
-            + str(self.ecommerceLastOrderTimestamp)
         )
         self.set_cookie("id", cookie_value, self.configVisitorCookieTimeout)
 
