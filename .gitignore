@@ -2,6 +2,8 @@
 *.pyc
 __pycache__/
 translate.py
+tests/config.py
+tests/cookies.txt
 
 src/matomo.egg-info/
 build/

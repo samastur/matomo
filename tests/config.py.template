@@ -1,0 +1,8 @@
+# Replace Xs with your Matomo values
+MATOMO_SITE_ID=X
+MATOMO_TOKEN_AUTH="XXXXXXXXXXXXXXXXXXXXXXXXXX"
+MATOMO_TRACKING_API_URL="https://XXX.matomo.cloud/matomo.php"
+MATOMO_ANALYTICS_API_URL="https://XXX.matomo.cloud/?module=API"
+
+HOST=""                   # Host registered under SITE_ID
+REMOTE_ADDR="127.0.0.1"   # The IP address that should be registered as making requests
