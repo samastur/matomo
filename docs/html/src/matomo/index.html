@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>src.matomo API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>src.matomo</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import json
+from urllib.parse import urlencode, parse_qs
+import requests
+
+from .tracker import MatomoTracker
+
+
+&#34;&#34;&#34;
+Request structure:
+    request.server -- data about server
+    request.cookie -- cookie data
+
+request server data:
+    HTTPS
+    HTTP_ACCEPT_LANGUAGE
+    HTTP_HOST
+    HTTP_REFERER
+    HTTP_USER_AGENT
+    PATH_INFO
+    QUERY_STRING
+    REMOTE_ADDR
+    REQUEST_URI
+    SCRIPT_NAME
+
+&#34;&#34;&#34;
+
+
+class Matomo(MatomoTracker):
+    def send_request(self, url, method=&#34;GET&#34;, data=None, force=False):
+        # parameter data, when present, is a JSON string
+        if self.doBulkRequests and not force:
+            self.storedTrackingActions = &#34;{}{}{}&#34;.format(
+                url,
+                (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
+                (
+                    &#34;&amp;lang=&#34; + urlencode(self.accept_language)
+                    if self.accept_language
+                    else &#34;&#34;
+                ),
+            )
+            self.clear_custom_variables()
+            self.clear_custom_dimensions()
+            self.clear_custom_tracking_parameters()
+            self.user_agent = &#34;&#34;
+            self.accept_language = &#34;&#34;
+
+            return True
+
+        proxies = None
+        if self.get_proxy():
+            proxy = self.get_proxy()
+            scheme = &#34;https&#34; if proxy.lower().startswith(&#34;https&#34;) else &#34;http&#34;
+            proxies = {scheme: proxy}
+
+        post_data = None
+        if (
+            self.request_method
+            and self.request_method == &#34;POST&#34;
+            and not self.doBulkRequests
+        ):
+            url, post_data = url.split(&#34;?&#34;)
+            post_data = parse_qs(post_data) if post_data else {}
+            method = &#34;POST&#34;
+
+        data = json.loads(data) if data else post_data
+
+        headers = {
+            &#34;user-agent&#34;: self.user_agent,
+            &#34;accept-language&#34;: self.accept_language,
+        }
+
+        cookies = self.get_cookies()
+
+        # TODO Missing certificate section
+
+        if method == &#34;GET&#34;:
+            response = requests.get(
+                url,
+                headers=headers,
+                proxies=proxies,
+                timeout=self.requestTimeout,
+                cookies=cookies,
+            )
+        elif method == &#34;POST&#34;:
+            response = requests.post(
+                url,
+                data=data,
+                headers=headers,
+                proxies=proxies,
+                timeout=self.requestTimeout,
+                cookies=cookies
+            )
+        else:
+            raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
+        return response.content</code></pre>
+</details>
+</section>
+<section>
+<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+<dl>
+<dt><code class="name"><a title="src.matomo.request" href="request.html">src.matomo.request</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt><code class="name"><a title="src.matomo.tracker" href="tracker.html">src.matomo.tracker</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="src.matomo.Matomo"><code class="flex name class">
+<span>class <span class="ident">Matomo</span></span>
+<span>(</span><span>request, id_site, api_url='')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>MatomoTracker implements the Matomo Tracking Web API.</p>
+<p>For more information, see: <a href="https://github.com/matomo-org/matomo-php-tracker/">https://github.com/matomo-org/matomo-php-tracker/</a></p>
+<ul>
+<li>@package MatomoTracker</li>
+<li>@api</li>
+</ul>
+<p>Builds a MatomoTracker object, used to track visits, pages and Goal conversions
+for a specific website, by using the Matomo Tracking API.</p>
+<ul>
+<li>@param int id_site Id site to be tracked</li>
+<li>@param string api_url "http://example.org/matomo/" or "http://matomo.example.org/"
+If set, will overwrite MatomoTracker.URL</li>
+</ul></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Matomo(MatomoTracker):
+    def send_request(self, url, method=&#34;GET&#34;, data=None, force=False):
+        # parameter data, when present, is a JSON string
+        if self.doBulkRequests and not force:
+            self.storedTrackingActions = &#34;{}{}{}&#34;.format(
+                url,
+                (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
+                (
+                    &#34;&amp;lang=&#34; + urlencode(self.accept_language)
+                    if self.accept_language
+                    else &#34;&#34;
+                ),
+            )
+            self.clear_custom_variables()
+            self.clear_custom_dimensions()
+            self.clear_custom_tracking_parameters()
+            self.user_agent = &#34;&#34;
+            self.accept_language = &#34;&#34;
+
+            return True
+
+        proxies = None
+        if self.get_proxy():
+            proxy = self.get_proxy()
+            scheme = &#34;https&#34; if proxy.lower().startswith(&#34;https&#34;) else &#34;http&#34;
+            proxies = {scheme: proxy}
+
+        post_data = None
+        if (
+            self.request_method
+            and self.request_method == &#34;POST&#34;
+            and not self.doBulkRequests
+        ):
+            url, post_data = url.split(&#34;?&#34;)
+            post_data = parse_qs(post_data) if post_data else {}
+            method = &#34;POST&#34;
+
+        data = json.loads(data) if data else post_data
+
+        headers = {
+            &#34;user-agent&#34;: self.user_agent,
+            &#34;accept-language&#34;: self.accept_language,
+        }
+
+        cookies = self.get_cookies()
+
+        # TODO Missing certificate section
+
+        if method == &#34;GET&#34;:
+            response = requests.get(
+                url,
+                headers=headers,
+                proxies=proxies,
+                timeout=self.requestTimeout,
+                cookies=cookies,
+            )
+        elif method == &#34;POST&#34;:
+            response = requests.post(
+                url,
+                data=data,
+                headers=headers,
+                proxies=proxies,
+                timeout=self.requestTimeout,
+                cookies=cookies
+            )
+        else:
+            raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
+        return response.content</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="src.matomo.tracker.MatomoTracker" href="tracker.html#src.matomo.tracker.MatomoTracker">MatomoTracker</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="src.matomo.Matomo.send_request"><code class="name flex">
+<span>def <span class="ident">send_request</span></span>(<span>self, url, method='GET', data=None, force=False)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def send_request(self, url, method=&#34;GET&#34;, data=None, force=False):
+    # parameter data, when present, is a JSON string
+    if self.doBulkRequests and not force:
+        self.storedTrackingActions = &#34;{}{}{}&#34;.format(
+            url,
+            (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
+            (
+                &#34;&amp;lang=&#34; + urlencode(self.accept_language)
+                if self.accept_language
+                else &#34;&#34;
+            ),
+        )
+        self.clear_custom_variables()
+        self.clear_custom_dimensions()
+        self.clear_custom_tracking_parameters()
+        self.user_agent = &#34;&#34;
+        self.accept_language = &#34;&#34;
+
+        return True
+
+    proxies = None
+    if self.get_proxy():
+        proxy = self.get_proxy()
+        scheme = &#34;https&#34; if proxy.lower().startswith(&#34;https&#34;) else &#34;http&#34;
+        proxies = {scheme: proxy}
+
+    post_data = None
+    if (
+        self.request_method
+        and self.request_method == &#34;POST&#34;
+        and not self.doBulkRequests
+    ):
+        url, post_data = url.split(&#34;?&#34;)
+        post_data = parse_qs(post_data) if post_data else {}
+        method = &#34;POST&#34;
+
+    data = json.loads(data) if data else post_data
+
+    headers = {
+        &#34;user-agent&#34;: self.user_agent,
+        &#34;accept-language&#34;: self.accept_language,
+    }
+
+    cookies = self.get_cookies()
+
+    # TODO Missing certificate section
+
+    if method == &#34;GET&#34;:
+        response = requests.get(
+            url,
+            headers=headers,
+            proxies=proxies,
+            timeout=self.requestTimeout,
+            cookies=cookies,
+        )
+    elif method == &#34;POST&#34;:
+        response = requests.post(
+            url,
+            data=data,
+            headers=headers,
+            proxies=proxies,
+            timeout=self.requestTimeout,
+            cookies=cookies
+        )
+    else:
+        raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
+    return response.content</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="src.matomo.tracker.MatomoTracker" href="tracker.html#src.matomo.tracker.MatomoTracker">MatomoTracker</a></b></code>:
+<ul class="hlist">
+<li><code><a title="src.matomo.tracker.MatomoTracker.DEBUG_APPEND_URL" href="tracker.html#src.matomo.tracker.MatomoTracker.DEBUG_APPEND_URL">DEBUG_APPEND_URL</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.DEBUG_LAST_REQUESTED_URL" href="tracker.html#src.matomo.tracker.MatomoTracker.DEBUG_LAST_REQUESTED_URL">DEBUG_LAST_REQUESTED_URL</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.DEFAULT_CHARSET_PARAMETER_VALUES" href="tracker.html#src.matomo.tracker.MatomoTracker.DEFAULT_CHARSET_PARAMETER_VALUES">DEFAULT_CHARSET_PARAMETER_VALUES</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.FIRST_PARTY_COOKIES_PREFIX" href="tracker.html#src.matomo.tracker.MatomoTracker.FIRST_PARTY_COOKIES_PREFIX">FIRST_PARTY_COOKIES_PREFIX</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.LENGTH_VISITOR_ID" href="tracker.html#src.matomo.tracker.MatomoTracker.LENGTH_VISITOR_ID">LENGTH_VISITOR_ID</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.URL" href="tracker.html#src.matomo.tracker.MatomoTracker.URL">URL</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.VERSION" href="tracker.html#src.matomo.tracker.MatomoTracker.VERSION">VERSION</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.add_ecommerce_item" href="tracker.html#src.matomo.tracker.MatomoTracker.add_ecommerce_item">add_ecommerce_item</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.clear_custom_dimensions" href="tracker.html#src.matomo.tracker.MatomoTracker.clear_custom_dimensions">clear_custom_dimensions</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.clear_custom_tracking_parameters" href="tracker.html#src.matomo.tracker.MatomoTracker.clear_custom_tracking_parameters">clear_custom_tracking_parameters</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.clear_custom_variables" href="tracker.html#src.matomo.tracker.MatomoTracker.clear_custom_variables">clear_custom_variables</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.clear_performance_timings" href="tracker.html#src.matomo.tracker.MatomoTracker.clear_performance_timings">clear_performance_timings</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.delete_cookies" href="tracker.html#src.matomo.tracker.MatomoTracker.delete_cookies">delete_cookies</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.disable_cookie_support" href="tracker.html#src.matomo.tracker.MatomoTracker.disable_cookie_support">disable_cookie_support</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.disable_send_image_response" href="tracker.html#src.matomo.tracker.MatomoTracker.disable_send_image_response">disable_send_image_response</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_bulk_track" href="tracker.html#src.matomo.tracker.MatomoTracker.do_bulk_track">do_bulk_track</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_ping" href="tracker.html#src.matomo.tracker.MatomoTracker.do_ping">do_ping</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_action" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_action">do_track_action</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_content_impression" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_content_impression">do_track_content_impression</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_content_interaction" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_content_interaction">do_track_content_interaction</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_ecommerce_cart_update" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_ecommerce_cart_update">do_track_ecommerce_cart_update</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_ecommerce_order" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_ecommerce_order">do_track_ecommerce_order</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_event" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_event">do_track_event</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_goal" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_goal">do_track_goal</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_page_view" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_page_view">do_track_page_view</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.do_track_site_search" href="tracker.html#src.matomo.tracker.MatomoTracker.do_track_site_search">do_track_site_search</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.domain_fixup" href="tracker.html#src.matomo.tracker.MatomoTracker.domain_fixup">domain_fixup</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.enable_bulk_tracking" href="tracker.html#src.matomo.tracker.MatomoTracker.enable_bulk_tracking">enable_bulk_tracking</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.enable_cookies" href="tracker.html#src.matomo.tracker.MatomoTracker.enable_cookies">enable_cookies</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.force_dot_as_separator_for_decimal_point" href="tracker.html#src.matomo.tracker.MatomoTracker.force_dot_as_separator_for_decimal_point">force_dot_as_separator_for_decimal_point</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_attribution_info" href="tracker.html#src.matomo.tracker.MatomoTracker.get_attribution_info">get_attribution_info</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_base_url" href="tracker.html#src.matomo.tracker.MatomoTracker.get_base_url">get_base_url</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_cookie_matching_name" href="tracker.html#src.matomo.tracker.MatomoTracker.get_cookie_matching_name">get_cookie_matching_name</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_cookie_name" href="tracker.html#src.matomo.tracker.MatomoTracker.get_cookie_name">get_cookie_name</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_current_host" href="tracker.html#src.matomo.tracker.MatomoTracker.get_current_host">get_current_host</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_current_query_string" href="tracker.html#src.matomo.tracker.MatomoTracker.get_current_query_string">get_current_query_string</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_current_scheme" href="tracker.html#src.matomo.tracker.MatomoTracker.get_current_scheme">get_current_scheme</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_current_script_name" href="tracker.html#src.matomo.tracker.MatomoTracker.get_current_script_name">get_current_script_name</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_current_url" href="tracker.html#src.matomo.tracker.MatomoTracker.get_current_url">get_current_url</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_custom_dimension" href="tracker.html#src.matomo.tracker.MatomoTracker.get_custom_dimension">get_custom_dimension</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_custom_variable" href="tracker.html#src.matomo.tracker.MatomoTracker.get_custom_variable">get_custom_variable</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_custom_variables_from_cookie" href="tracker.html#src.matomo.tracker.MatomoTracker.get_custom_variables_from_cookie">get_custom_variables_from_cookie</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_incoming_tracker_cookie" href="tracker.html#src.matomo.tracker.MatomoTracker.get_incoming_tracker_cookie">get_incoming_tracker_cookie</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_ip" href="tracker.html#src.matomo.tracker.MatomoTracker.get_ip">get_ip</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_proxy" href="tracker.html#src.matomo.tracker.MatomoTracker.get_proxy">get_proxy</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_request_timeout" href="tracker.html#src.matomo.tracker.MatomoTracker.get_request_timeout">get_request_timeout</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_timestamp" href="tracker.html#src.matomo.tracker.MatomoTracker.get_timestamp">get_timestamp</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_action" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_action">get_url_track_action</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_content_impression" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_content_impression">get_url_track_content_impression</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_content_interaction" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_content_interaction">get_url_track_content_interaction</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_ecommerce" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_ecommerce">get_url_track_ecommerce</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_ecommerce_cart_update" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_ecommerce_cart_update">get_url_track_ecommerce_cart_update</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_ecommerce_order" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_ecommerce_order">get_url_track_ecommerce_order</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_event" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_event">get_url_track_event</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_goal" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_goal">get_url_track_goal</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_page_view" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_page_view">get_url_track_page_view</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_url_track_site_search" href="tracker.html#src.matomo.tracker.MatomoTracker.get_url_track_site_search">get_url_track_site_search</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_user_agent" href="tracker.html#src.matomo.tracker.MatomoTracker.get_user_agent">get_user_agent</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_user_id" href="tracker.html#src.matomo.tracker.MatomoTracker.get_user_id">get_user_id</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_user_id_hashed" href="tracker.html#src.matomo.tracker.MatomoTracker.get_user_id_hashed">get_user_id_hashed</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.get_visitor_id" href="tracker.html#src.matomo.tracker.MatomoTracker.get_visitor_id">get_visitor_id</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.load_visitor_id_cookie" href="tracker.html#src.matomo.tracker.MatomoTracker.load_visitor_id_cookie">load_visitor_id_cookie</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.parse_incoming_cookies" href="tracker.html#src.matomo.tracker.MatomoTracker.parse_incoming_cookies">parse_incoming_cookies</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_attribution_info" href="tracker.html#src.matomo.tracker.MatomoTracker.set_attribution_info">set_attribution_info</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_browser_has_cookies" href="tracker.html#src.matomo.tracker.MatomoTracker.set_browser_has_cookies">set_browser_has_cookies</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_browser_language" href="tracker.html#src.matomo.tracker.MatomoTracker.set_browser_language">set_browser_language</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_city" href="tracker.html#src.matomo.tracker.MatomoTracker.set_city">set_city</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_cookie" href="tracker.html#src.matomo.tracker.MatomoTracker.set_cookie">set_cookie</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_country" href="tracker.html#src.matomo.tracker.MatomoTracker.set_country">set_country</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_custom_dimension" href="tracker.html#src.matomo.tracker.MatomoTracker.set_custom_dimension">set_custom_dimension</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_custom_tracking_parameter" href="tracker.html#src.matomo.tracker.MatomoTracker.set_custom_tracking_parameter">set_custom_tracking_parameter</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_custom_variable" href="tracker.html#src.matomo.tracker.MatomoTracker.set_custom_variable">set_custom_variable</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_debug_string_append" href="tracker.html#src.matomo.tracker.MatomoTracker.set_debug_string_append">set_debug_string_append</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_ecommerce_view" href="tracker.html#src.matomo.tracker.MatomoTracker.set_ecommerce_view">set_ecommerce_view</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_first_party_cookies" href="tracker.html#src.matomo.tracker.MatomoTracker.set_first_party_cookies">set_first_party_cookies</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_force_new_visit" href="tracker.html#src.matomo.tracker.MatomoTracker.set_force_new_visit">set_force_new_visit</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_force_visit_date_time" href="tracker.html#src.matomo.tracker.MatomoTracker.set_force_visit_date_time">set_force_visit_date_time</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_generation_time" href="tracker.html#src.matomo.tracker.MatomoTracker.set_generation_time">set_generation_time</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_id_site" href="tracker.html#src.matomo.tracker.MatomoTracker.set_id_site">set_id_site</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_ip" href="tracker.html#src.matomo.tracker.MatomoTracker.set_ip">set_ip</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_latitude" href="tracker.html#src.matomo.tracker.MatomoTracker.set_latitude">set_latitude</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_local_time" href="tracker.html#src.matomo.tracker.MatomoTracker.set_local_time">set_local_time</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_longitude" href="tracker.html#src.matomo.tracker.MatomoTracker.set_longitude">set_longitude</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_new_visitor_id" href="tracker.html#src.matomo.tracker.MatomoTracker.set_new_visitor_id">set_new_visitor_id</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_outgoing_tracker_cookie" href="tracker.html#src.matomo.tracker.MatomoTracker.set_outgoing_tracker_cookie">set_outgoing_tracker_cookie</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_page_charset" href="tracker.html#src.matomo.tracker.MatomoTracker.set_page_charset">set_page_charset</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_performance_timings" href="tracker.html#src.matomo.tracker.MatomoTracker.set_performance_timings">set_performance_timings</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_plugins" href="tracker.html#src.matomo.tracker.MatomoTracker.set_plugins">set_plugins</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_proxy" href="tracker.html#src.matomo.tracker.MatomoTracker.set_proxy">set_proxy</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_region" href="tracker.html#src.matomo.tracker.MatomoTracker.set_region">set_region</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_request_method_non_bulk" href="tracker.html#src.matomo.tracker.MatomoTracker.set_request_method_non_bulk">set_request_method_non_bulk</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_request_timeout" href="tracker.html#src.matomo.tracker.MatomoTracker.set_request_timeout">set_request_timeout</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_resolution" href="tracker.html#src.matomo.tracker.MatomoTracker.set_resolution">set_resolution</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_token_auth" href="tracker.html#src.matomo.tracker.MatomoTracker.set_token_auth">set_token_auth</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_url" href="tracker.html#src.matomo.tracker.MatomoTracker.set_url">set_url</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_url_referer" href="tracker.html#src.matomo.tracker.MatomoTracker.set_url_referer">set_url_referer</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_url_referrer" href="tracker.html#src.matomo.tracker.MatomoTracker.set_url_referrer">set_url_referrer</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_user_agent" href="tracker.html#src.matomo.tracker.MatomoTracker.set_user_agent">set_user_agent</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_user_id" href="tracker.html#src.matomo.tracker.MatomoTracker.set_user_id">set_user_id</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_visitor_id" href="tracker.html#src.matomo.tracker.MatomoTracker.set_visitor_id">set_visitor_id</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="src" href="../index.html">src</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<ul>
+<li><code><a title="src.matomo.request" href="request.html">src.matomo.request</a></code></li>
+<li><code><a title="src.matomo.tracker" href="tracker.html">src.matomo.tracker</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="src.matomo.Matomo" href="#src.matomo.Matomo">Matomo</a></code></h4>
+<ul class="">
+<li><code><a title="src.matomo.Matomo.send_request" href="#src.matomo.Matomo.send_request">send_request</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
