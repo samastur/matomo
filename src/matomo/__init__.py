@@ -82,6 +82,10 @@ class Matomo(MatomoTracker):
                 cookies=cookies,
             )
         elif method == "POST":
+            # Send tokenAuth only over POST
+            if self.token_auth:
+                data["token_auth"] = self.token_auth
+                
             response = requests.post(
                 url,
                 data=data,
