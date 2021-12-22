@@ -746,7 +746,7 @@ class MatomoTracker:
         * @throws Exception
         * @return string Response
         """
-        if self.storedTrackingActions:
+        if not self.storedTrackingActions:
             raise Exception(
                 (
                     "Error:  you must call the def do_track_page_view or do_track_goal"
