@@ -2,7 +2,7 @@ import json
 from urllib.parse import urlencode, parse_qs
 import requests
 
-from .tracker import MatomoTracker
+from .tracker import MatomoTracker, urlencode_plus
 
 
 """
@@ -30,9 +30,12 @@ request data:
 
 
 class Matomo(MatomoTracker):
+    PATH_TO_CERTIFICATES_FILE = None  # Same purpose and limitations as CURLOPT_CAINFO
+
     def send_request(self, url, method="GET", data=None, force=False):
         # parameter data, when present, is a JSON string
         if self.doBulkRequests and not force:
+            # Store request and send it with other's with do_bulk_track
             self.storedTrackingActions.append("{}{}{}".format(
                 url,
                 ("&ua=" + urlencode(self.user_agent) if self.user_agent else ""),
@@ -49,6 +52,27 @@ class Matomo(MatomoTracker):
             self.accept_language = ""
 
             return True
+
+        force_post_url_encoded = False
+        if not self.doBulkRequests:
+            if self.request_method.upper() == "POST":
+                url, data = url.split("?")
+                force_post_url_encoded = True
+                method = "POST"
+
+            if self.token_auth:
+                append_token_str = f"&token_auth={urlencode_plus(self.token_auth)}"
+                if not self.request_method or method == "POST":
+                    # Only post token_auth but use GET URL parameters for everything else
+                    force_post_url_encoded = True
+                    if not data:
+                        data = ""
+                    data += append_token_str
+                    data = data.lstrip("&")  # when no request method set we don't want it to start with '&'
+                # In original 'elseif (!empty($this->token_auth))' which has to be true
+                else:
+                    # Use GET for all URL parameters
+                    url += append_token_str
 
         proxies = None
         if self.get_proxy():
@@ -75,17 +99,7 @@ class Matomo(MatomoTracker):
 
         cookies = self.get_cookies()
 
-        # TODO Missing certificate section
-
-        if method == "GET":
-            response = requests.get(
-                url,
-                headers=headers,
-                proxies=proxies,
-                timeout=self.requestTimeout,
-                cookies=cookies,
-            )
-        elif method == "POST":
+        if method == "POST" or data or force_post_url_encoded:
             # Send tokenAuth only over POST
             if self.token_auth:
                 data["token_auth"] = self.token_auth
@@ -96,11 +110,21 @@ class Matomo(MatomoTracker):
                 headers=headers,
                 proxies=proxies,
                 timeout=self.requestTimeout,
-                cookies=cookies
+                cookies=cookies,
+                cert=self.PATH_TO_CERTIFICATES_FILE
+            )
+        elif method == "GET":
+            response = requests.get(
+                url,
+                headers=headers,
+                proxies=proxies,
+                timeout=self.requestTimeout,
+                cookies=cookies,
+                cert=self.PATH_TO_CERTIFICATES_FILE
             )
         else:
             raise Exception(f"Unsupported HTTP method: {method}")
-        return response.content
+        return response
 
 
 def matomo_get_url_track_page_view(request, id_site, document_title=""):

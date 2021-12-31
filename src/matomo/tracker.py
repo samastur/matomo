@@ -201,6 +201,7 @@ class MatomoTracker:
 
         self.proxy = ""
         self.proxy_port = ""
+        self.proxy_type = "https"
 
     def set_page_charset(self, charset=""):
         """
@@ -1387,7 +1388,7 @@ class MatomoTracker:
         self.request_method = "POST" if method.upper() == "POST" else "GET"
         return self
 
-    def set_proxy(self, proxy, proxy_port=80):
+    def set_proxy(self, proxy, proxy_port=80, proxy_type="https"):
         """
         If a proxy is needed to look up the address of the Matomo site, set it with this
         * @param str proxy IP as string, for example "173.234.92.107"
@@ -1395,14 +1396,15 @@ class MatomoTracker:
         """
         self.proxy = proxy
         self.proxy_port = proxy_port
+        self.proxy_type = proxy_type
 
     def get_proxy(self):
         """
-        If the proxy IP and the proxy port have been set, with the set_proxy() function
-        returns a string, like "173.234.92.107:80"
+        If the proxy IP,the proxy port and the proxy_type have been set,
+        with the set_proxy() function returns a string, like "https://173.234.92.107:80"
         """
-        if self.proxy and self.proxy_port:
-            return f"{self.proxy}:{self.proxy_port}"
+        if self.proxy and self.proxy_port and self.proxy_type:
+            return f"{self.proxy_type}://{self.proxy}:{self.proxy_port}"
         return None
 
     """
