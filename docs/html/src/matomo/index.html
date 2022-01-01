@@ -30,34 +30,41 @@
 from urllib.parse import urlencode, parse_qs
 import requests
 
-from .tracker import MatomoTracker
+from .tracker import MatomoTracker, urlencode_plus
 
 
 &#34;&#34;&#34;
 Request structure:
-    request.server -- data about server
+    request        -- meta data about request accessible as a dict
     request.cookie -- cookie data
 
-request server data:
+request data:
     HTTPS
     HTTP_ACCEPT_LANGUAGE
     HTTP_HOST
     HTTP_REFERER
     HTTP_USER_AGENT
-    PATH_INFO
     QUERY_STRING
     REMOTE_ADDR
+
+    PATH_INFO
     REQUEST_URI
     SCRIPT_NAME
+
+    Last 3 are used to determine the request&#39;s path if order of precedence
+    (SCRIPT_NAME is used only if both PATH_INFO and REQUEST_URI are missing/empty)
 
 &#34;&#34;&#34;
 
 
 class Matomo(MatomoTracker):
+    PATH_TO_CERTIFICATES_FILE = None  # Same purpose and limitations as CURLOPT_CAINFO
+
     def send_request(self, url, method=&#34;GET&#34;, data=None, force=False):
         # parameter data, when present, is a JSON string
         if self.doBulkRequests and not force:
-            self.storedTrackingActions = &#34;{}{}{}&#34;.format(
+            # Store request and send it with other&#39;s with do_bulk_track
+            self.storedTrackingActions.append(&#34;{}{}{}&#34;.format(
                 url,
                 (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
                 (
@@ -65,7 +72,7 @@ class Matomo(MatomoTracker):
                     if self.accept_language
                     else &#34;&#34;
                 ),
-            )
+            ))
             self.clear_custom_variables()
             self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
@@ -73,6 +80,27 @@ class Matomo(MatomoTracker):
             self.accept_language = &#34;&#34;
 
             return True
+
+        force_post_url_encoded = False
+        if not self.doBulkRequests:
+            if self.request_method.upper() == &#34;POST&#34;:
+                url, data = url.split(&#34;?&#34;)
+                force_post_url_encoded = True
+                method = &#34;POST&#34;
+
+            if self.token_auth:
+                append_token_str = f&#34;&amp;token_auth={urlencode_plus(self.token_auth)}&#34;
+                if not self.request_method or method == &#34;POST&#34;:
+                    # Only post token_auth but use GET URL parameters for everything else
+                    force_post_url_encoded = True
+                    if not data:
+                        data = &#34;&#34;
+                    data += append_token_str
+                    data = data.lstrip(&#34;&amp;&#34;)  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
+                # In original &#39;elseif (!empty($this-&gt;token_auth))&#39; which has to be true
+                else:
+                    # Use GET for all URL parameters
+                    url += append_token_str
 
         proxies = None
         if self.get_proxy():
@@ -99,28 +127,57 @@ class Matomo(MatomoTracker):
 
         cookies = self.get_cookies()
 
-        # TODO Missing certificate section
-
-        if method == &#34;GET&#34;:
-            response = requests.get(
-                url,
-                headers=headers,
-                proxies=proxies,
-                timeout=self.requestTimeout,
-                cookies=cookies,
-            )
-        elif method == &#34;POST&#34;:
+        if method == &#34;POST&#34; or data or force_post_url_encoded:
+            # Send tokenAuth only over POST
+            if self.token_auth:
+                data[&#34;token_auth&#34;] = self.token_auth
+                
             response = requests.post(
                 url,
                 data=data,
                 headers=headers,
                 proxies=proxies,
                 timeout=self.requestTimeout,
-                cookies=cookies
+                cookies=cookies,
+                cert=self.PATH_TO_CERTIFICATES_FILE
+            )
+        elif method == &#34;GET&#34;:
+            response = requests.get(
+                url,
+                headers=headers,
+                proxies=proxies,
+                timeout=self.requestTimeout,
+                cookies=cookies,
+                cert=self.PATH_TO_CERTIFICATES_FILE
             )
         else:
             raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
-        return response.content</code></pre>
+        return response
+
+
+def matomo_get_url_track_page_view(request, id_site, document_title=&#34;&#34;):
+    &#34;&#34;&#34;
+    Helper function to quickly generate the URL to track a page view.
+
+    * @param id_site
+    * @param str document_title
+    * @return str
+    &#34;&#34;&#34;
+    tracker = Matomo(request, id_site)
+    return tracker.get_url_track_page_view(document_title)
+
+
+def matomo_get_url_track_goal(request, id_site, id_goal, revenue=0.0):
+    &#34;&#34;&#34;
+    Helper function to quickly generate the URL to track a goal.
+
+    * @param id_site
+    * @param id_goal
+    * @param float revenue
+    * @return str
+    &#34;&#34;&#34;
+    tracker = Matomo(request, id_site)
+    return tracker.get_url_track_goal(id_goal, revenue)</code></pre>
 </details>
 </section>
 <section>
@@ -139,6 +196,63 @@ class Matomo(MatomoTracker):
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="src.matomo.matomo_get_url_track_goal"><code class="name flex">
+<span>def <span class="ident">matomo_get_url_track_goal</span></span>(<span>request, id_site, id_goal, revenue=0.0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Helper function to quickly generate the URL to track a goal.</p>
+<ul>
+<li>@param id_site</li>
+<li>@param id_goal</li>
+<li>@param float revenue</li>
+<li>@return str</li>
+</ul></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def matomo_get_url_track_goal(request, id_site, id_goal, revenue=0.0):
+    &#34;&#34;&#34;
+    Helper function to quickly generate the URL to track a goal.
+
+    * @param id_site
+    * @param id_goal
+    * @param float revenue
+    * @return str
+    &#34;&#34;&#34;
+    tracker = Matomo(request, id_site)
+    return tracker.get_url_track_goal(id_goal, revenue)</code></pre>
+</details>
+</dd>
+<dt id="src.matomo.matomo_get_url_track_page_view"><code class="name flex">
+<span>def <span class="ident">matomo_get_url_track_page_view</span></span>(<span>request, id_site, document_title='')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Helper function to quickly generate the URL to track a page view.</p>
+<ul>
+<li>@param id_site</li>
+<li>@param str document_title</li>
+<li>@return str</li>
+</ul></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def matomo_get_url_track_page_view(request, id_site, document_title=&#34;&#34;):
+    &#34;&#34;&#34;
+    Helper function to quickly generate the URL to track a page view.
+
+    * @param id_site
+    * @param str document_title
+    * @return str
+    &#34;&#34;&#34;
+    tracker = Matomo(request, id_site)
+    return tracker.get_url_track_page_view(document_title)</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -158,7 +272,7 @@ class Matomo(MatomoTracker):
 for a specific website, by using the Matomo Tracking API.</p>
 <ul>
 <li>@param int id_site Id site to be tracked</li>
-<li>@param string api_url "http://example.org/matomo/" or "http://matomo.example.org/"
+<li>@param str api_url "http://example.org/matomo/" or "http://matomo.example.org/"
 If set, will overwrite MatomoTracker.URL</li>
 </ul></div>
 <details class="source">
@@ -166,10 +280,13 @@ If set, will overwrite MatomoTracker.URL</li>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Matomo(MatomoTracker):
+    PATH_TO_CERTIFICATES_FILE = None  # Same purpose and limitations as CURLOPT_CAINFO
+
     def send_request(self, url, method=&#34;GET&#34;, data=None, force=False):
         # parameter data, when present, is a JSON string
         if self.doBulkRequests and not force:
-            self.storedTrackingActions = &#34;{}{}{}&#34;.format(
+            # Store request and send it with other&#39;s with do_bulk_track
+            self.storedTrackingActions.append(&#34;{}{}{}&#34;.format(
                 url,
                 (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
                 (
@@ -177,7 +294,7 @@ If set, will overwrite MatomoTracker.URL</li>
                     if self.accept_language
                     else &#34;&#34;
                 ),
-            )
+            ))
             self.clear_custom_variables()
             self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
@@ -185,6 +302,27 @@ If set, will overwrite MatomoTracker.URL</li>
             self.accept_language = &#34;&#34;
 
             return True
+
+        force_post_url_encoded = False
+        if not self.doBulkRequests:
+            if self.request_method.upper() == &#34;POST&#34;:
+                url, data = url.split(&#34;?&#34;)
+                force_post_url_encoded = True
+                method = &#34;POST&#34;
+
+            if self.token_auth:
+                append_token_str = f&#34;&amp;token_auth={urlencode_plus(self.token_auth)}&#34;
+                if not self.request_method or method == &#34;POST&#34;:
+                    # Only post token_auth but use GET URL parameters for everything else
+                    force_post_url_encoded = True
+                    if not data:
+                        data = &#34;&#34;
+                    data += append_token_str
+                    data = data.lstrip(&#34;&amp;&#34;)  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
+                # In original &#39;elseif (!empty($this-&gt;token_auth))&#39; which has to be true
+                else:
+                    # Use GET for all URL parameters
+                    url += append_token_str
 
         proxies = None
         if self.get_proxy():
@@ -211,33 +349,44 @@ If set, will overwrite MatomoTracker.URL</li>
 
         cookies = self.get_cookies()
 
-        # TODO Missing certificate section
-
-        if method == &#34;GET&#34;:
-            response = requests.get(
-                url,
-                headers=headers,
-                proxies=proxies,
-                timeout=self.requestTimeout,
-                cookies=cookies,
-            )
-        elif method == &#34;POST&#34;:
+        if method == &#34;POST&#34; or data or force_post_url_encoded:
+            # Send tokenAuth only over POST
+            if self.token_auth:
+                data[&#34;token_auth&#34;] = self.token_auth
+                
             response = requests.post(
                 url,
                 data=data,
                 headers=headers,
                 proxies=proxies,
                 timeout=self.requestTimeout,
-                cookies=cookies
+                cookies=cookies,
+                cert=self.PATH_TO_CERTIFICATES_FILE
+            )
+        elif method == &#34;GET&#34;:
+            response = requests.get(
+                url,
+                headers=headers,
+                proxies=proxies,
+                timeout=self.requestTimeout,
+                cookies=cookies,
+                cert=self.PATH_TO_CERTIFICATES_FILE
             )
         else:
             raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
-        return response.content</code></pre>
+        return response</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="src.matomo.tracker.MatomoTracker" href="tracker.html#src.matomo.tracker.MatomoTracker">MatomoTracker</a></li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="src.matomo.Matomo.PATH_TO_CERTIFICATES_FILE"><code class="name">var <span class="ident">PATH_TO_CERTIFICATES_FILE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
 <dt id="src.matomo.Matomo.send_request"><code class="name flex">
@@ -252,7 +401,8 @@ If set, will overwrite MatomoTracker.URL</li>
 <pre><code class="python">def send_request(self, url, method=&#34;GET&#34;, data=None, force=False):
     # parameter data, when present, is a JSON string
     if self.doBulkRequests and not force:
-        self.storedTrackingActions = &#34;{}{}{}&#34;.format(
+        # Store request and send it with other&#39;s with do_bulk_track
+        self.storedTrackingActions.append(&#34;{}{}{}&#34;.format(
             url,
             (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
             (
@@ -260,7 +410,7 @@ If set, will overwrite MatomoTracker.URL</li>
                 if self.accept_language
                 else &#34;&#34;
             ),
-        )
+        ))
         self.clear_custom_variables()
         self.clear_custom_dimensions()
         self.clear_custom_tracking_parameters()
@@ -268,6 +418,27 @@ If set, will overwrite MatomoTracker.URL</li>
         self.accept_language = &#34;&#34;
 
         return True
+
+    force_post_url_encoded = False
+    if not self.doBulkRequests:
+        if self.request_method.upper() == &#34;POST&#34;:
+            url, data = url.split(&#34;?&#34;)
+            force_post_url_encoded = True
+            method = &#34;POST&#34;
+
+        if self.token_auth:
+            append_token_str = f&#34;&amp;token_auth={urlencode_plus(self.token_auth)}&#34;
+            if not self.request_method or method == &#34;POST&#34;:
+                # Only post token_auth but use GET URL parameters for everything else
+                force_post_url_encoded = True
+                if not data:
+                    data = &#34;&#34;
+                data += append_token_str
+                data = data.lstrip(&#34;&amp;&#34;)  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
+            # In original &#39;elseif (!empty($this-&gt;token_auth))&#39; which has to be true
+            else:
+                # Use GET for all URL parameters
+                url += append_token_str
 
     proxies = None
     if self.get_proxy():
@@ -294,28 +465,32 @@ If set, will overwrite MatomoTracker.URL</li>
 
     cookies = self.get_cookies()
 
-    # TODO Missing certificate section
-
-    if method == &#34;GET&#34;:
-        response = requests.get(
-            url,
-            headers=headers,
-            proxies=proxies,
-            timeout=self.requestTimeout,
-            cookies=cookies,
-        )
-    elif method == &#34;POST&#34;:
+    if method == &#34;POST&#34; or data or force_post_url_encoded:
+        # Send tokenAuth only over POST
+        if self.token_auth:
+            data[&#34;token_auth&#34;] = self.token_auth
+            
         response = requests.post(
             url,
             data=data,
             headers=headers,
             proxies=proxies,
             timeout=self.requestTimeout,
-            cookies=cookies
+            cookies=cookies,
+            cert=self.PATH_TO_CERTIFICATES_FILE
+        )
+    elif method == &#34;GET&#34;:
+        response = requests.get(
+            url,
+            headers=headers,
+            proxies=proxies,
+            timeout=self.requestTimeout,
+            cookies=cookies,
+            cert=self.PATH_TO_CERTIFICATES_FILE
         )
     else:
         raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
-    return response.content</code></pre>
+    return response</code></pre>
 </details>
 </dd>
 </dl>
@@ -324,7 +499,6 @@ If set, will overwrite MatomoTracker.URL</li>
 <li><code><b><a title="src.matomo.tracker.MatomoTracker" href="tracker.html#src.matomo.tracker.MatomoTracker">MatomoTracker</a></b></code>:
 <ul class="hlist">
 <li><code><a title="src.matomo.tracker.MatomoTracker.DEBUG_APPEND_URL" href="tracker.html#src.matomo.tracker.MatomoTracker.DEBUG_APPEND_URL">DEBUG_APPEND_URL</a></code></li>
-<li><code><a title="src.matomo.tracker.MatomoTracker.DEBUG_LAST_REQUESTED_URL" href="tracker.html#src.matomo.tracker.MatomoTracker.DEBUG_LAST_REQUESTED_URL">DEBUG_LAST_REQUESTED_URL</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.DEFAULT_CHARSET_PARAMETER_VALUES" href="tracker.html#src.matomo.tracker.MatomoTracker.DEFAULT_CHARSET_PARAMETER_VALUES">DEFAULT_CHARSET_PARAMETER_VALUES</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.FIRST_PARTY_COOKIES_PREFIX" href="tracker.html#src.matomo.tracker.MatomoTracker.FIRST_PARTY_COOKIES_PREFIX">FIRST_PARTY_COOKIES_PREFIX</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.LENGTH_VISITOR_ID" href="tracker.html#src.matomo.tracker.MatomoTracker.LENGTH_VISITOR_ID">LENGTH_VISITOR_ID</a></code></li>
@@ -447,11 +621,18 @@ If set, will overwrite MatomoTracker.URL</li>
 <li><code><a title="src.matomo.tracker" href="tracker.html">src.matomo.tracker</a></code></li>
 </ul>
 </li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="src.matomo.matomo_get_url_track_goal" href="#src.matomo.matomo_get_url_track_goal">matomo_get_url_track_goal</a></code></li>
+<li><code><a title="src.matomo.matomo_get_url_track_page_view" href="#src.matomo.matomo_get_url_track_page_view">matomo_get_url_track_page_view</a></code></li>
+</ul>
+</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
 <h4><code><a title="src.matomo.Matomo" href="#src.matomo.Matomo">Matomo</a></code></h4>
 <ul class="">
+<li><code><a title="src.matomo.Matomo.PATH_TO_CERTIFICATES_FILE" href="#src.matomo.Matomo.PATH_TO_CERTIFICATES_FILE">PATH_TO_CERTIFICATES_FILE</a></code></li>
 <li><code><a title="src.matomo.Matomo.send_request" href="#src.matomo.Matomo.send_request">send_request</a></code></li>
 </ul>
 </li>
