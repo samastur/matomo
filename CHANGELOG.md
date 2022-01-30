@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7
+
+* add Django support and Django example app
+* reworked cookie handling
+* fixed a bug translating values from cookies into Matomo calls
+
+
 ## 0.6
 
 * fixed bulk tracking (thanks to [Ebsan](https://github.com/Ebsan))
