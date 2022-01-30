@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 import hashlib
 import json
@@ -15,6 +16,7 @@ def urlencode_plus(s):
         return urlencode(s)
     else:
         raise TypeError("urlencode_plus works only on strings and dicts.", s)
+
 
 #
 # This module is hand-corrected version of an automated translation of PHP MatomoTracker
@@ -44,6 +46,7 @@ def strspn(str1, str2, start=0, length=None):
  * @category Matomo
  * @package MatomoTracker
 """
+
 
 class MatomoTracker:
     """
@@ -115,6 +118,7 @@ class MatomoTracker:
         """
         self.request = request
         self.request_method = "GET"
+        self.response = None
         self.ecommerceItems = []
         self.attributionInfo = []
         self.eventCustomVar = {}
@@ -248,7 +252,15 @@ class MatomoTracker:
         """
         return self
 
-    def set_performance_timings(self, network=0, server=0, transfer=0, domProcessing=0, domCompletion=0, onLoad=0):
+    def set_performance_timings(
+        self,
+        network=0,
+        server=0,
+        transfer=0,
+        domProcessing=0,
+        domCompletion=0,
+        onLoad=0,
+    ):
         """
         Sets timings for various browser performance metrics.
         * @see https://developer.mozilla.org/en-US/docs/Web/API/PerformanceTiming
@@ -341,7 +353,7 @@ class MatomoTracker:
         Returns the currently assigned Custom Variable.
 
         If scope is 'visit', it will attempt to read the value set in the first party cookie created by Matomo Tracker
-         (self.request.cookie array).
+         (self.request.cookie dict).
 
         * @param int id Custom Variable integer index to fetch from cookie. Should be a value from 1 to 5
         * @param str scope Custom variable scope. Possible values: visit, page, event
@@ -421,7 +433,7 @@ class MatomoTracker:
         * @return self
         * @throws Exception
         """
-        regex = re.compile('/^dimension([0-9]+)$/')
+        regex = re.compile("/^dimension([0-9]+)$/")
         matches = re.findall(regex, tracking_api_parameter)
         if len(matches):
             # Unlike PHP preg_match it returns captured subpattern as first element
@@ -596,10 +608,7 @@ class MatomoTracker:
         ).hexdigest()[:4]
 
         return "{}{}.{}.{}".format(
-            self.FIRST_PARTY_COOKIES_PREFIX,
-            cookie_name,
-            self.id_site,
-            hash_string
+            self.FIRST_PARTY_COOKIES_PREFIX, cookie_name, self.id_site, hash_string
         )
 
     def do_track_page_view(self, document_title):
@@ -1410,6 +1419,7 @@ class MatomoTracker:
     """
     * @ignore
     """
+
     def send_request(self, url, method="get", data=None, force=False):
         raise NotImplementedError("Missing send_request implementation")
 
@@ -1419,7 +1429,9 @@ class MatomoTracker:
         * @return str|int
         """
         if self.forcedDatetime:
-            return datetime.strptime(self.forcedDatetime, "%Y-%m-%d %H:%M:%S").timestamp()
+            return datetime.strptime(
+                self.forcedDatetime, "%Y-%m-%d %H:%M:%S"
+            ).timestamp()
         else:
             return time.time()
 
@@ -1446,6 +1458,7 @@ class MatomoTracker:
     """
     * @ignore
     """
+
     def get_request(self, id_site):
         self.set_first_party_cookies()
 
@@ -1467,7 +1480,11 @@ class MatomoTracker:
             + f"&r={str(random.randint(0, 2147483647))[2:8]}"
             + (f"&cip={self.ip}" if self.ip and self.token_auth else "")
             + (f"&uid={urlencode_plus(self.user_id)}" if self.user_id else "")
-            + ("&cdt=" + urlencode_plus(self.forcedDatetime) if self.forcedDatetime else "")
+            + (
+                "&cdt=" + urlencode_plus(self.forcedDatetime)
+                if self.forcedDatetime
+                else ""
+            )
             + ("&new_visit=1" if self.forcedNewVisit else "")
             + f"&_idts={self.createTs}{self.plugins}"
             + (
@@ -1475,11 +1492,7 @@ class MatomoTracker:
                 if self.local_hour and self.local_minute and self.local_second
                 else ""
             )
-            + (
-                f"&res={self.width}x{self.height}"
-                if self.width and self.height
-                else ""
-            )
+            + (f"&res={self.width}x{self.height}" if self.width and self.height else "")
             + (f"&cookie={self.hasCookies}" if self.hasCookies else "")
             + (f"&data={self.customData}" if self.customData else "")
             + (
@@ -1502,8 +1515,10 @@ class MatomoTracker:
                 if self.forcedVisitorId
                 else f"&_id={self.get_visitor_id()}"
             )
-            + "&url=" + urlencode_plus(self.pageUrl)
-            + "&urlref=" + urlencode_plus(self.urlReferrer)
+            + "&url="
+            + urlencode_plus(self.pageUrl)
+            + "&urlref="
+            + urlencode_plus(self.urlReferrer)
             + (
                 f"&cs={self.pageCharset}"
                 if (
@@ -1523,7 +1538,11 @@ class MatomoTracker:
                 if self.attributionInfo and self.attributionInfo[1]
                 else ""
             )
-            + ("&_refts=" + self.attributionInfo[2] if self.attributionInfo and self.attributionInfo[2] else "")
+            + (
+                "&_refts=" + str(self.attributionInfo[2])
+                if self.attributionInfo and self.attributionInfo[2]
+                else ""
+            )
             + (
                 "&_ref=" + urlencode_plus(self.attributionInfo[3])
                 if self.attributionInfo and self.attributionInfo[3]
@@ -1531,7 +1550,7 @@ class MatomoTracker:
             )
             + (f"&country={urlencode_plus(self.country)}" if self.country else "")
             + (f"&region={urlencode_plus(self.region)}" if self.region else "")
-            + (f"&city={urlencode_plus(self.city)}"  if self.city else "")
+            + (f"&city={urlencode_plus(self.city)}" if self.city else "")
             + (f"&lat={urlencode_plus(str(self.lat))}" if self.lat else "")
             + (f"&long={urlencode_plus(str(self.long))}" if self.long else "")
             + custom_fields
@@ -1545,8 +1564,16 @@ class MatomoTracker:
                 (f"&pf_net={self.networkTime}" if self.networkTime else "")
                 + (f"&pf_srv={self.serverTime}" if self.serverTime else "")
                 + (f"&pf_tfr={self.transferTime}" if self.transferTime else "")
-                + (f"&pf_dm1={self.domProcessingTime}" if self.domProcessingTime else "")
-                + (f"&pf_dm2={self.domCompletionTime}" if self.domCompletionTime else "")
+                + (
+                    f"&pf_dm1={self.domProcessingTime}"
+                    if self.domProcessingTime
+                    else ""
+                )
+                + (
+                    f"&pf_dm2={self.domCompletionTime}"
+                    if self.domCompletionTime
+                    else ""
+                )
                 + (f"&pf_onl={self.onLoadTime}" if self.onLoadTime else "")
             )
             self.clear_performance_timings()
@@ -1574,7 +1601,7 @@ class MatomoTracker:
         * @return str String value of cookie, or None if not found
         * @ignore
         """
-        if self.configCookiesDisabled or not self.request.cookie.get_dict():
+        if self.configCookiesDisabled or not self.request.cookie:
             return None
         name = self.get_cookie_name(name)
 
@@ -1673,7 +1700,7 @@ class MatomoTracker:
         All cookies are supported: 'id' and 'ses' and 'ref' and 'cvar' cookies.
         * @return self
         """
-        if self.configCookiesDisabled:
+        if self.configCookiesDisabled or not self.response:
             return self
 
         if self.cookieVisitorId:
@@ -1699,24 +1726,34 @@ class MatomoTracker:
 
     def _set_cookie(self, cookie_name, cookie_value, cookie_ttl):
         """
-        Sets a first party cookie to the client to improve dual JS-Python tracking.
+        Returns a HTTP header for a first party cookie to the client to improve dual JS-Python tracking.
 
         This replicates the matomo.js tracker algorithms for consistency and better accuracy.
 
         * @param cookie_name
         * @param cookie_value
         * @param cookie_ttl
-        * @return self
+        * @return string
         """
         cookie_expire = self.currentTs + cookie_ttl
         cookie_header = (
-            f"Set-Cookie: {urlencode_plus(cookie_name)}={urlencode_plus(cookie_value)}"
-            (f"; expires='{time.strftime('%a, %d-%m-%Y %H:%M:%S', cookieExpire)} GMT" if cookie_expire else "")
-            (f"; path='{self.configCookiePath}" if self.configCookiePath else "")
-            (f"; domain='{self.configCookieDomain}" if self.configCookieDomain else "")
-            (f"; secure" if self.configCookieSecure else "")
-            (f"; HttpOnly" if self.configCookieHTTPOnly else "")
-            (f"; SameSite={urlencode_plus(self.configCookieSameSite)}" if self.configCookieSameSite else "")
+            f"Set-Cookie: {urlencode_plus(cookie_name)}={urlencode_plus(cookie_value)}"(
+                f"; expires='{time.strftime('%a, %d-%m-%Y %H:%M:%S', cookieExpire)} GMT"
+                if cookie_expire
+                else ""
+            )(f"; path='{self.configCookiePath}" if self.configCookiePath else "")(
+                f"; domain='{self.configCookieDomain}"
+                if self.configCookieDomain
+                else ""
+            )(
+                f"; secure" if self.configCookieSecure else ""
+            )(
+                f"; HttpOnly" if self.configCookieHTTPOnly else ""
+            )(
+                f"; SameSite={urlencode_plus(self.configCookieSameSite)}"
+                if self.configCookieSameSite
+                else ""
+            )
         )
         return cookie_header
 
@@ -1732,8 +1769,44 @@ class MatomoTracker:
         * @return self
         """
         cookie_expire = self.currentTs + cookie_ttl
-        self.request.cookie.set(cookie_name, cookie_value, expires=cookie_expire)
+        self.set_cookie_response(
+            cookie_name,
+            cookie_value,
+            max_age=cookie_expire,
+            secure=self.configCookieSecure,
+            httponly=self.configCookieHTTPOnly,
+            path=self.configCookiePath,
+        )
         return self
+
+    def set_cookie_response(
+        self,
+        cookie_name,
+        cookie_value,
+        max_age=None,
+        path="/",
+        domain=None,
+        secure=False,
+        httponly=False,
+        samesite=None,
+    ):
+        """
+        Sets a first party cookie to the client to improve dual JS-Python tracking.
+
+        Unlike set_cookie this method is called with all cookie parameters. Unlike PHP cookie setting in Python is very
+        framework specific so this method needs to be implemented
+
+        @param cookie_name:
+        @param cookie_value:
+        @param max_age:
+        @param path:
+        @param domain:
+        @param secure:
+        @param httponly:
+        @param samesite:
+        """
+        logging.error("set_cookie_response not implemented. Can't set a cookie")
+        raise NotImplementedError
 
     def get_cookies(self):
         return self.request.cookie

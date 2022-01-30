@@ -8,3 +8,6 @@ tests/cookies.txt
 src/matomo.egg-info/
 build/
 dist/
+
+local_settings.py
+db.sqlite3

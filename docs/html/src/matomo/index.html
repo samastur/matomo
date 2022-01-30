@@ -64,15 +64,17 @@ class Matomo(MatomoTracker):
         # parameter data, when present, is a JSON string
         if self.doBulkRequests and not force:
             # Store request and send it with other&#39;s with do_bulk_track
-            self.storedTrackingActions.append(&#34;{}{}{}&#34;.format(
-                url,
-                (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
-                (
-                    &#34;&amp;lang=&#34; + urlencode(self.accept_language)
-                    if self.accept_language
-                    else &#34;&#34;
-                ),
-            ))
+            self.storedTrackingActions.append(
+                &#34;{}{}{}&#34;.format(
+                    url,
+                    (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
+                    (
+                        &#34;&amp;lang=&#34; + urlencode(self.accept_language)
+                        if self.accept_language
+                        else &#34;&#34;
+                    ),
+                )
+            )
             self.clear_custom_variables()
             self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
@@ -96,7 +98,9 @@ class Matomo(MatomoTracker):
                     if not data:
                         data = &#34;&#34;
                     data += append_token_str
-                    data = data.lstrip(&#34;&amp;&#34;)  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
+                    data = data.lstrip(
+                        &#34;&amp;&#34;
+                    )  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
                 # In original &#39;elseif (!empty($this-&gt;token_auth))&#39; which has to be true
                 else:
                     # Use GET for all URL parameters
@@ -131,7 +135,7 @@ class Matomo(MatomoTracker):
             # Send tokenAuth only over POST
             if self.token_auth:
                 data[&#34;token_auth&#34;] = self.token_auth
-                
+
             response = requests.post(
                 url,
                 data=data,
@@ -139,7 +143,7 @@ class Matomo(MatomoTracker):
                 proxies=proxies,
                 timeout=self.requestTimeout,
                 cookies=cookies,
-                cert=self.PATH_TO_CERTIFICATES_FILE
+                cert=self.PATH_TO_CERTIFICATES_FILE,
             )
         elif method == &#34;GET&#34;:
             response = requests.get(
@@ -148,7 +152,7 @@ class Matomo(MatomoTracker):
                 proxies=proxies,
                 timeout=self.requestTimeout,
                 cookies=cookies,
-                cert=self.PATH_TO_CERTIFICATES_FILE
+                cert=self.PATH_TO_CERTIFICATES_FILE,
             )
         else:
             raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
@@ -183,6 +187,10 @@ def matomo_get_url_track_goal(request, id_site, id_goal, revenue=0.0):
 <section>
 <h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
+<dt><code class="name"><a title="src.matomo.django" href="django.html">src.matomo.django</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt><code class="name"><a title="src.matomo.request" href="request.html">src.matomo.request</a></code></dt>
 <dd>
 <div class="desc"></div>
@@ -286,15 +294,17 @@ If set, will overwrite MatomoTracker.URL</li>
         # parameter data, when present, is a JSON string
         if self.doBulkRequests and not force:
             # Store request and send it with other&#39;s with do_bulk_track
-            self.storedTrackingActions.append(&#34;{}{}{}&#34;.format(
-                url,
-                (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
-                (
-                    &#34;&amp;lang=&#34; + urlencode(self.accept_language)
-                    if self.accept_language
-                    else &#34;&#34;
-                ),
-            ))
+            self.storedTrackingActions.append(
+                &#34;{}{}{}&#34;.format(
+                    url,
+                    (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
+                    (
+                        &#34;&amp;lang=&#34; + urlencode(self.accept_language)
+                        if self.accept_language
+                        else &#34;&#34;
+                    ),
+                )
+            )
             self.clear_custom_variables()
             self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
@@ -318,7 +328,9 @@ If set, will overwrite MatomoTracker.URL</li>
                     if not data:
                         data = &#34;&#34;
                     data += append_token_str
-                    data = data.lstrip(&#34;&amp;&#34;)  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
+                    data = data.lstrip(
+                        &#34;&amp;&#34;
+                    )  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
                 # In original &#39;elseif (!empty($this-&gt;token_auth))&#39; which has to be true
                 else:
                     # Use GET for all URL parameters
@@ -353,7 +365,7 @@ If set, will overwrite MatomoTracker.URL</li>
             # Send tokenAuth only over POST
             if self.token_auth:
                 data[&#34;token_auth&#34;] = self.token_auth
-                
+
             response = requests.post(
                 url,
                 data=data,
@@ -361,7 +373,7 @@ If set, will overwrite MatomoTracker.URL</li>
                 proxies=proxies,
                 timeout=self.requestTimeout,
                 cookies=cookies,
-                cert=self.PATH_TO_CERTIFICATES_FILE
+                cert=self.PATH_TO_CERTIFICATES_FILE,
             )
         elif method == &#34;GET&#34;:
             response = requests.get(
@@ -370,7 +382,7 @@ If set, will overwrite MatomoTracker.URL</li>
                 proxies=proxies,
                 timeout=self.requestTimeout,
                 cookies=cookies,
-                cert=self.PATH_TO_CERTIFICATES_FILE
+                cert=self.PATH_TO_CERTIFICATES_FILE,
             )
         else:
             raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
@@ -402,15 +414,17 @@ If set, will overwrite MatomoTracker.URL</li>
     # parameter data, when present, is a JSON string
     if self.doBulkRequests and not force:
         # Store request and send it with other&#39;s with do_bulk_track
-        self.storedTrackingActions.append(&#34;{}{}{}&#34;.format(
-            url,
-            (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
-            (
-                &#34;&amp;lang=&#34; + urlencode(self.accept_language)
-                if self.accept_language
-                else &#34;&#34;
-            ),
-        ))
+        self.storedTrackingActions.append(
+            &#34;{}{}{}&#34;.format(
+                url,
+                (&#34;&amp;ua=&#34; + urlencode(self.user_agent) if self.user_agent else &#34;&#34;),
+                (
+                    &#34;&amp;lang=&#34; + urlencode(self.accept_language)
+                    if self.accept_language
+                    else &#34;&#34;
+                ),
+            )
+        )
         self.clear_custom_variables()
         self.clear_custom_dimensions()
         self.clear_custom_tracking_parameters()
@@ -434,7 +448,9 @@ If set, will overwrite MatomoTracker.URL</li>
                 if not data:
                     data = &#34;&#34;
                 data += append_token_str
-                data = data.lstrip(&#34;&amp;&#34;)  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
+                data = data.lstrip(
+                    &#34;&amp;&#34;
+                )  # when no request method set we don&#39;t want it to start with &#39;&amp;&#39;
             # In original &#39;elseif (!empty($this-&gt;token_auth))&#39; which has to be true
             else:
                 # Use GET for all URL parameters
@@ -469,7 +485,7 @@ If set, will overwrite MatomoTracker.URL</li>
         # Send tokenAuth only over POST
         if self.token_auth:
             data[&#34;token_auth&#34;] = self.token_auth
-            
+
         response = requests.post(
             url,
             data=data,
@@ -477,7 +493,7 @@ If set, will overwrite MatomoTracker.URL</li>
             proxies=proxies,
             timeout=self.requestTimeout,
             cookies=cookies,
-            cert=self.PATH_TO_CERTIFICATES_FILE
+            cert=self.PATH_TO_CERTIFICATES_FILE,
         )
     elif method == &#34;GET&#34;:
         response = requests.get(
@@ -486,7 +502,7 @@ If set, will overwrite MatomoTracker.URL</li>
             proxies=proxies,
             timeout=self.requestTimeout,
             cookies=cookies,
-            cert=self.PATH_TO_CERTIFICATES_FILE
+            cert=self.PATH_TO_CERTIFICATES_FILE,
         )
     else:
         raise Exception(f&#34;Unsupported HTTP method: {method}&#34;)
@@ -565,6 +581,7 @@ If set, will overwrite MatomoTracker.URL</li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_browser_language" href="tracker.html#src.matomo.tracker.MatomoTracker.set_browser_language">set_browser_language</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_city" href="tracker.html#src.matomo.tracker.MatomoTracker.set_city">set_city</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_cookie" href="tracker.html#src.matomo.tracker.MatomoTracker.set_cookie">set_cookie</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_cookie_response" href="tracker.html#src.matomo.tracker.MatomoTracker.set_cookie_response">set_cookie_response</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_country" href="tracker.html#src.matomo.tracker.MatomoTracker.set_country">set_country</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_custom_dimension" href="tracker.html#src.matomo.tracker.MatomoTracker.set_custom_dimension">set_custom_dimension</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_custom_tracking_parameter" href="tracker.html#src.matomo.tracker.MatomoTracker.set_custom_tracking_parameter">set_custom_tracking_parameter</a></code></li>
@@ -617,6 +634,7 @@ If set, will overwrite MatomoTracker.URL</li>
 </li>
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
+<li><code><a title="src.matomo.django" href="django.html">src.matomo.django</a></code></li>
 <li><code><a title="src.matomo.request" href="request.html">src.matomo.request</a></code></li>
 <li><code><a title="src.matomo.tracker" href="tracker.html">src.matomo.tracker</a></code></li>
 </ul>

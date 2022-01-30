@@ -36,15 +36,17 @@ class Matomo(MatomoTracker):
         # parameter data, when present, is a JSON string
         if self.doBulkRequests and not force:
             # Store request and send it with other's with do_bulk_track
-            self.storedTrackingActions.append("{}{}{}".format(
-                url,
-                ("&ua=" + urlencode(self.user_agent) if self.user_agent else ""),
-                (
-                    "&lang=" + urlencode(self.accept_language)
-                    if self.accept_language
-                    else ""
-                ),
-            ))
+            self.storedTrackingActions.append(
+                "{}{}{}".format(
+                    url,
+                    ("&ua=" + urlencode(self.user_agent) if self.user_agent else ""),
+                    (
+                        "&lang=" + urlencode(self.accept_language)
+                        if self.accept_language
+                        else ""
+                    ),
+                )
+            )
             self.clear_custom_variables()
             self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
@@ -68,7 +70,9 @@ class Matomo(MatomoTracker):
                     if not data:
                         data = ""
                     data += append_token_str
-                    data = data.lstrip("&")  # when no request method set we don't want it to start with '&'
+                    data = data.lstrip(
+                        "&"
+                    )  # when no request method set we don't want it to start with '&'
                 # In original 'elseif (!empty($this->token_auth))' which has to be true
                 else:
                     # Use GET for all URL parameters
@@ -103,7 +107,7 @@ class Matomo(MatomoTracker):
             # Send tokenAuth only over POST
             if self.token_auth:
                 data["token_auth"] = self.token_auth
-                
+
             response = requests.post(
                 url,
                 data=data,
@@ -111,7 +115,7 @@ class Matomo(MatomoTracker):
                 proxies=proxies,
                 timeout=self.requestTimeout,
                 cookies=cookies,
-                cert=self.PATH_TO_CERTIFICATES_FILE
+                cert=self.PATH_TO_CERTIFICATES_FILE,
             )
         elif method == "GET":
             response = requests.get(
@@ -120,7 +124,7 @@ class Matomo(MatomoTracker):
                 proxies=proxies,
                 timeout=self.requestTimeout,
                 cookies=cookies,
-                cert=self.PATH_TO_CERTIFICATES_FILE
+                cert=self.PATH_TO_CERTIFICATES_FILE,
             )
         else:
             raise Exception(f"Unsupported HTTP method: {method}")
