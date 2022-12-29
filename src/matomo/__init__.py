@@ -51,13 +51,14 @@ class Matomo(MatomoTracker):
             self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
             self.user_agent = ""
+            self.clientHints = {}
             self.accept_language = ""
 
             return True
 
         force_post_url_encoded = False
         if not self.doBulkRequests:
-            if self.request_method.upper() == "POST":
+            if self.request_method and self.request_method.upper() == "POST":
                 url, data = url.split("?")
                 force_post_url_encoded = True
                 method = "POST"
