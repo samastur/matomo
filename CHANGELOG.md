@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.3
+
+* updated to the latest Matomo tracker (version 5)
+* a few tests for upcoming test suite
+* fixed failed previous uploads
+
+
 ## 0.7
 
 * add Django support and Django example app
