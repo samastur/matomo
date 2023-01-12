@@ -516,7 +516,7 @@ class MatomoTracker:
         * @return self
         """
         if is_str(fullVersionList):
-            regex = re.compile('/^"([^"]+)"; ?v="([^"]+)"(?:, )?/')
+            regex = re.compile("^\"([^\"]+?)\"; ?v=\"([^\"]+?)\"(?:, )?")
             l = []
 
             match = re.search(regex, fullVersionList)

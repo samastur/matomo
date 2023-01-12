@@ -4,7 +4,7 @@ A Python client for Matomo based on a port of
 [the PHP tracker](https://github.com/matomo-org/matomo-php-tracker) with
 an almost 100% compatibility.
 
-The current version should be almost fully compatible with Matomo 4, but it has
+The current version should be almost fully compatible with Matomo 5, but it has
 not been extensively tested yet. 100% compatibility is not possible because of
 differences between PHP running environment and Python's.
 
@@ -27,6 +27,8 @@ to read its API documentation. Better documentation is coming soon.
   proxy to include proxy type)
 * added `PATH_TO_CERTIFICATES_FILE` to `Matomo` class for using certificates
   (instead of checking if a constant with that name exists)
+* missing support for `doTrackPhpThrowable` and `doTrackCrash` until I figure
+  out how to use and test them.
 
 Cookie handling is not yet settled and may change in the future.
 

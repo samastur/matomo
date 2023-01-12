@@ -51,6 +51,7 @@ def urlencode_plus(s):
 #
 
 is_int = lambda x: isinstance(x, int)
+is_str = lambda x: isinstance(x, str)
 is_list = lambda x: isinstance(x, list)
 is_dict = lambda x: isinstance(x, dict)
 is_numeric = lambda x: isinstance(x, float)  # Used only once with float parameter
@@ -186,6 +187,14 @@ class MatomoTracker:
         self.ip = self.request.get(&#34;REMOTE_ADDR&#34;, &#34;&#34;)
         self.accept_language = self.request.get(&#34;HTTP_ACCEPT_LANGUAGE&#34;, &#34;&#34;)
         self.user_agent = self.request.get(&#34;HTTP_USER_AGENT&#34;, &#34;&#34;)
+        self.clientHints = {}
+        self.set_client_hints(
+            self.request.get(&#34;HTTP_SEC_CH_UA_MODEL&#34;, &#34;&#34;),
+            self.request.get(&#34;HTTP_SEC_CH_UA_PLATFORM&#34;, &#34;&#34;),
+            self.request.get(&#34;HTTP_SEC_CH_UA_PLATFORM_VERSION&#34;, &#34;&#34;),
+            self.request.get(&#34;HTTP_SEC_CH_UA_FULL_VERSION_LIST&#34;, &#34;&#34;),
+            self.request.get(&#34;HTTP_SEC_CH_UA_FULL_VERSION&#34;, &#34;&#34;)
+        )
         if api_url:
             self.URL = api_url
 
@@ -394,9 +403,9 @@ class MatomoTracker:
             return self.pageCustomVar.get(id, False)
         elif scope == &#34;event&#34;:
             return self.eventCustomVar.get(id, False)
-        else:
-            if scope != &#34;visit&#34;:
-                raise Exception(&#34;Invalid &#39;scope&#39; parameter value&#34;)
+        elif scope != &#34;visit&#34;:
+            raise Exception(&#34;Invalid &#39;scope&#39; parameter value&#34;)
+
         if self.visitorCustomVar.get(id):
             return self.visitorCustomVar[id]
 
@@ -518,6 +527,50 @@ class MatomoTracker:
         self.user_agent = user_agent
         return self
 
+    def set_client_hints(self, model = &#39;&#39;, platform = &#39;&#39;, platformVersion = &#39;&#39;, fullVersionList = &#39;&#39;, uaFullVersion = &#39;&#39;):
+        &#34;&#34;&#34;
+        Sets the client hints, used to detect OS and browser.
+        If this function is not called, the client hints sent with the current request will be used.
+
+        Supported as of Matomo 4.12.0
+
+        * @param str model  Value of the header &#39;HTTP_SEC_CH_UA_MODEL&#39;
+        * @param str platform  Value of the header &#39;HTTP_SEC_CH_UA_PLATFORM&#39;
+        * @param str platformVersion  Value of the header &#39;HTTP_SEC_CH_UA_PLATFORM_VERSION&#39;
+        * @param str|list fullVersionList Value of header &#39;HTTP_SEC_CH_UA_FULL_VERSION_LIST&#39;
+                        or a dict containing all brands with the structure
+                        [{&#39;brand&#39;: &#39;Chrome&#39;, &#39;version&#39; =&gt; &#39;10.0.2&#39;], {&#39;brand&#39;: &#39;...]
+        * @param str uaFullVersion  Value of the header &#39;HTTP_SEC_CH_UA_FULL_VERSION&#39;
+        * @return self
+        &#34;&#34;&#34;
+        if is_str(fullVersionList):
+            regex = re.compile(&#34;^\&#34;([^\&#34;]+?)\&#34;; ?v=\&#34;([^\&#34;]+?)\&#34;(?:, )?&#34;)
+            l = []
+
+            match = re.search(regex, fullVersionList)
+            while match:
+                brand, version = re.findall(regex, fullVersionList)[0]
+                l.append({
+                    &#34;brand&#34;: brand,
+                    &#34;version&#34;: version
+                })
+
+                start, end = match.span()
+                fullVersionList = fullVersionList[end:]
+                match = re.search(regex, fullVersionList)
+
+            fullVersionList = l
+        elif not is_list(fullVersionList):
+            fullVersionList = []
+        self.clientHints = {
+            &#34;model&#34;: model,
+            &#34;platform&#34;: platform,
+            &#34;platformVersion&#34;: platformVersion,
+            &#34;uaFullVersion&#34;: uaFullVersion,
+            &#34;fullVersionList&#34;: fullVersionList
+        }
+        return self
+
     def set_country(self, country):
         &#34;&#34;&#34;
         Sets the country of the visitor. If not used, Matomo will try to find the country
@@ -585,6 +638,13 @@ class MatomoTracker:
 
         &#34;&#34;&#34;
         self.doBulkRequests = True
+
+    def disable_bulk_tracking(self):
+        &#34;&#34;&#34;
+        Disables the bulk request feature. Make sure to call `do_bulk_track()` before disabling it if you have stored
+        tracking actions previously as this method won&#39;t be sending any previously stored actions before disabling it.
+        &#34;&#34;&#34;
+        self.doBulkRequests = False
 
     def enable_cookies(
         self, domain=&#34;&#34;, path=&#34;/&#34;, secure=False, http_only=False, same_site=&#34;&#34;
@@ -1193,7 +1253,7 @@ class MatomoTracker:
 
         If not set, the visitor ID will be fetched from the 1st party cookie, or will be set to a random UUID.
 
-        * @param str visitor_id 16 hexadecimal characters visitor ID, eg. &#34;33c31e01394bdc63&#34;
+        * @param str visitor_id 16 hexadecimal characters visitor ID, e.g. &#34;33c31e01394bdc63&#34;
         * @return self
         * @throws Exception
         &#34;&#34;&#34;
@@ -1544,9 +1604,9 @@ class MatomoTracker:
                 else f&#34;&amp;_id={self.get_visitor_id()}&#34;
             )
             + &#34;&amp;url=&#34;
-            + urlencode_plus(self.pageUrl)
+            + urlencode_plus(self.pageUrl or &#34;&#34;)
             + &#34;&amp;urlref=&#34;
-            + urlencode_plus(self.urlReferrer)
+            + urlencode_plus(self.urlReferrer or &#34;&#34;)
             + (
                 f&#34;&amp;cs={self.pageCharset}&#34;
                 if (
@@ -1584,6 +1644,7 @@ class MatomoTracker:
             + custom_fields
             + custom_dimensions
             + (&#34;&amp;send_image=0&#34; if not self.sendImageResponse else &#34;&#34;)
+            + (f&#34;&amp;uadata={urlencode_plus(json.dumps(self.clientHints))}&#34; if self.clientHints else &#34;&#34;)
             + self.DEBUG_APPEND_URL
         )
 
@@ -1707,7 +1768,7 @@ class MatomoTracker:
 
     def get_current_url(self):
         &#34;&#34;&#34;
-        Returns the current full URL (scheme, host, path and query string.
+        Returns the current full URL (scheme, host, path and query string).
 
         * @return str
         * @ignore
@@ -1766,7 +1827,7 @@ class MatomoTracker:
         cookie_expire = self.currentTs + cookie_ttl
         cookie_header = (
             f&#34;Set-Cookie: {urlencode_plus(cookie_name)}={urlencode_plus(cookie_value)}&#34;(
-                f&#34;; expires=&#39;{time.strftime(&#39;%a, %d-%m-%Y %H:%M:%S&#39;, cookieExpire)} GMT&#34;
+                f&#34;; expires=&#39;{time.strftime(&#39;%a, %d-%m-%Y %H:%M:%S&#39;, cookie_expire)} GMT&#34;
                 if cookie_expire
                 else &#34;&#34;
             )(f&#34;; path=&#39;{self.configCookiePath}&#34; if self.configCookiePath else &#34;&#34;)(
@@ -1841,11 +1902,11 @@ class MatomoTracker:
 
     def get_custom_variables_from_cookie(self):
         &#34;&#34;&#34;
-        * @return bool|mixed
+        * @return dict
         &#34;&#34;&#34;
         cookie = self.get_cookie_matching_name(&#34;cvar&#34;)
         if not cookie:
-            return False
+            return {}
 
         return json.loads(cookie)
 
@@ -1946,6 +2007,18 @@ class MatomoTracker:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">is_numeric = lambda x: isinstance(x, float)  # Used only once with float parameter</code></pre>
+</details>
+</dd>
+<dt id="src.matomo.tracker.is_str"><code class="name flex">
+<span>def <span class="ident">is_str</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">is_str = lambda x: isinstance(x, str)</code></pre>
 </details>
 </dd>
 <dt id="src.matomo.tracker.strpos"><code class="name flex">
@@ -2130,6 +2203,14 @@ If set, will overwrite MatomoTracker.URL</li>
         self.ip = self.request.get(&#34;REMOTE_ADDR&#34;, &#34;&#34;)
         self.accept_language = self.request.get(&#34;HTTP_ACCEPT_LANGUAGE&#34;, &#34;&#34;)
         self.user_agent = self.request.get(&#34;HTTP_USER_AGENT&#34;, &#34;&#34;)
+        self.clientHints = {}
+        self.set_client_hints(
+            self.request.get(&#34;HTTP_SEC_CH_UA_MODEL&#34;, &#34;&#34;),
+            self.request.get(&#34;HTTP_SEC_CH_UA_PLATFORM&#34;, &#34;&#34;),
+            self.request.get(&#34;HTTP_SEC_CH_UA_PLATFORM_VERSION&#34;, &#34;&#34;),
+            self.request.get(&#34;HTTP_SEC_CH_UA_FULL_VERSION_LIST&#34;, &#34;&#34;),
+            self.request.get(&#34;HTTP_SEC_CH_UA_FULL_VERSION&#34;, &#34;&#34;)
+        )
         if api_url:
             self.URL = api_url
 
@@ -2338,9 +2419,9 @@ If set, will overwrite MatomoTracker.URL</li>
             return self.pageCustomVar.get(id, False)
         elif scope == &#34;event&#34;:
             return self.eventCustomVar.get(id, False)
-        else:
-            if scope != &#34;visit&#34;:
-                raise Exception(&#34;Invalid &#39;scope&#39; parameter value&#34;)
+        elif scope != &#34;visit&#34;:
+            raise Exception(&#34;Invalid &#39;scope&#39; parameter value&#34;)
+
         if self.visitorCustomVar.get(id):
             return self.visitorCustomVar[id]
 
@@ -2462,6 +2543,50 @@ If set, will overwrite MatomoTracker.URL</li>
         self.user_agent = user_agent
         return self
 
+    def set_client_hints(self, model = &#39;&#39;, platform = &#39;&#39;, platformVersion = &#39;&#39;, fullVersionList = &#39;&#39;, uaFullVersion = &#39;&#39;):
+        &#34;&#34;&#34;
+        Sets the client hints, used to detect OS and browser.
+        If this function is not called, the client hints sent with the current request will be used.
+
+        Supported as of Matomo 4.12.0
+
+        * @param str model  Value of the header &#39;HTTP_SEC_CH_UA_MODEL&#39;
+        * @param str platform  Value of the header &#39;HTTP_SEC_CH_UA_PLATFORM&#39;
+        * @param str platformVersion  Value of the header &#39;HTTP_SEC_CH_UA_PLATFORM_VERSION&#39;
+        * @param str|list fullVersionList Value of header &#39;HTTP_SEC_CH_UA_FULL_VERSION_LIST&#39;
+                        or a dict containing all brands with the structure
+                        [{&#39;brand&#39;: &#39;Chrome&#39;, &#39;version&#39; =&gt; &#39;10.0.2&#39;], {&#39;brand&#39;: &#39;...]
+        * @param str uaFullVersion  Value of the header &#39;HTTP_SEC_CH_UA_FULL_VERSION&#39;
+        * @return self
+        &#34;&#34;&#34;
+        if is_str(fullVersionList):
+            regex = re.compile(&#34;^\&#34;([^\&#34;]+?)\&#34;; ?v=\&#34;([^\&#34;]+?)\&#34;(?:, )?&#34;)
+            l = []
+
+            match = re.search(regex, fullVersionList)
+            while match:
+                brand, version = re.findall(regex, fullVersionList)[0]
+                l.append({
+                    &#34;brand&#34;: brand,
+                    &#34;version&#34;: version
+                })
+
+                start, end = match.span()
+                fullVersionList = fullVersionList[end:]
+                match = re.search(regex, fullVersionList)
+
+            fullVersionList = l
+        elif not is_list(fullVersionList):
+            fullVersionList = []
+        self.clientHints = {
+            &#34;model&#34;: model,
+            &#34;platform&#34;: platform,
+            &#34;platformVersion&#34;: platformVersion,
+            &#34;uaFullVersion&#34;: uaFullVersion,
+            &#34;fullVersionList&#34;: fullVersionList
+        }
+        return self
+
     def set_country(self, country):
         &#34;&#34;&#34;
         Sets the country of the visitor. If not used, Matomo will try to find the country
@@ -2529,6 +2654,13 @@ If set, will overwrite MatomoTracker.URL</li>
 
         &#34;&#34;&#34;
         self.doBulkRequests = True
+
+    def disable_bulk_tracking(self):
+        &#34;&#34;&#34;
+        Disables the bulk request feature. Make sure to call `do_bulk_track()` before disabling it if you have stored
+        tracking actions previously as this method won&#39;t be sending any previously stored actions before disabling it.
+        &#34;&#34;&#34;
+        self.doBulkRequests = False
 
     def enable_cookies(
         self, domain=&#34;&#34;, path=&#34;/&#34;, secure=False, http_only=False, same_site=&#34;&#34;
@@ -3137,7 +3269,7 @@ If set, will overwrite MatomoTracker.URL</li>
 
         If not set, the visitor ID will be fetched from the 1st party cookie, or will be set to a random UUID.
 
-        * @param str visitor_id 16 hexadecimal characters visitor ID, eg. &#34;33c31e01394bdc63&#34;
+        * @param str visitor_id 16 hexadecimal characters visitor ID, e.g. &#34;33c31e01394bdc63&#34;
         * @return self
         * @throws Exception
         &#34;&#34;&#34;
@@ -3488,9 +3620,9 @@ If set, will overwrite MatomoTracker.URL</li>
                 else f&#34;&amp;_id={self.get_visitor_id()}&#34;
             )
             + &#34;&amp;url=&#34;
-            + urlencode_plus(self.pageUrl)
+            + urlencode_plus(self.pageUrl or &#34;&#34;)
             + &#34;&amp;urlref=&#34;
-            + urlencode_plus(self.urlReferrer)
+            + urlencode_plus(self.urlReferrer or &#34;&#34;)
             + (
                 f&#34;&amp;cs={self.pageCharset}&#34;
                 if (
@@ -3528,6 +3660,7 @@ If set, will overwrite MatomoTracker.URL</li>
             + custom_fields
             + custom_dimensions
             + (&#34;&amp;send_image=0&#34; if not self.sendImageResponse else &#34;&#34;)
+            + (f&#34;&amp;uadata={urlencode_plus(json.dumps(self.clientHints))}&#34; if self.clientHints else &#34;&#34;)
             + self.DEBUG_APPEND_URL
         )
 
@@ -3651,7 +3784,7 @@ If set, will overwrite MatomoTracker.URL</li>
 
     def get_current_url(self):
         &#34;&#34;&#34;
-        Returns the current full URL (scheme, host, path and query string.
+        Returns the current full URL (scheme, host, path and query string).
 
         * @return str
         * @ignore
@@ -3710,7 +3843,7 @@ If set, will overwrite MatomoTracker.URL</li>
         cookie_expire = self.currentTs + cookie_ttl
         cookie_header = (
             f&#34;Set-Cookie: {urlencode_plus(cookie_name)}={urlencode_plus(cookie_value)}&#34;(
-                f&#34;; expires=&#39;{time.strftime(&#39;%a, %d-%m-%Y %H:%M:%S&#39;, cookieExpire)} GMT&#34;
+                f&#34;; expires=&#39;{time.strftime(&#39;%a, %d-%m-%Y %H:%M:%S&#39;, cookie_expire)} GMT&#34;
                 if cookie_expire
                 else &#34;&#34;
             )(f&#34;; path=&#39;{self.configCookiePath}&#34; if self.configCookiePath else &#34;&#34;)(
@@ -3785,11 +3918,11 @@ If set, will overwrite MatomoTracker.URL</li>
 
     def get_custom_variables_from_cookie(self):
         &#34;&#34;&#34;
-        * @return bool|mixed
+        * @return dict
         &#34;&#34;&#34;
         cookie = self.get_cookie_matching_name(&#34;cvar&#34;)
         if not cookie:
-            return False
+            return {}
 
         return json.loads(cookie)
 
@@ -4030,6 +4163,24 @@ and you wish to clear Custom Variables of 'visit' scope.</p></div>
     cookies = [&#34;id&#34;, &#34;ses&#34;, &#34;cvar&#34;, &#34;ref&#34;]
     for cookie in cookies:
         self.set_cookie(cookie, None, -86400)</code></pre>
+</details>
+</dd>
+<dt id="src.matomo.tracker.MatomoTracker.disable_bulk_tracking"><code class="name flex">
+<span>def <span class="ident">disable_bulk_tracking</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Disables the bulk request feature. Make sure to call <code>do_bulk_track()</code> before disabling it if you have stored
+tracking actions previously as this method won't be sending any previously stored actions before disabling it.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def disable_bulk_tracking(self):
+    &#34;&#34;&#34;
+    Disables the bulk request feature. Make sure to call `do_bulk_track()` before disabling it if you have stored
+    tracking actions previously as this method won&#39;t be sending any previously stored actions before disabling it.
+    &#34;&#34;&#34;
+    self.doBulkRequests = False</code></pre>
 </details>
 </dd>
 <dt id="src.matomo.tracker.MatomoTracker.disable_cookie_support"><code class="name flex">
@@ -4827,7 +4978,7 @@ will return "/dir1/dir2/index.php"</p>
 <span>def <span class="ident">get_current_url</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns the current full URL (scheme, host, path and query string.</p>
+<div class="desc"><p>Returns the current full URL (scheme, host, path and query string).</p>
 <ul>
 <li>@return str</li>
 <li>@ignore</li>
@@ -4838,7 +4989,7 @@ will return "/dir1/dir2/index.php"</p>
 </summary>
 <pre><code class="python">def get_current_url(self):
     &#34;&#34;&#34;
-    Returns the current full URL (scheme, host, path and query string.
+    Returns the current full URL (scheme, host, path and query string).
 
     * @return str
     * @ignore
@@ -4917,9 +5068,9 @@ will return "/dir1/dir2/index.php"</p>
         return self.pageCustomVar.get(id, False)
     elif scope == &#34;event&#34;:
         return self.eventCustomVar.get(id, False)
-    else:
-        if scope != &#34;visit&#34;:
-            raise Exception(&#34;Invalid &#39;scope&#39; parameter value&#34;)
+    elif scope != &#34;visit&#34;:
+        raise Exception(&#34;Invalid &#39;scope&#39; parameter value&#34;)
+
     if self.visitorCustomVar.get(id):
         return self.visitorCustomVar[id]
 
@@ -4942,7 +5093,7 @@ will return "/dir1/dir2/index.php"</p>
 </code></dt>
 <dd>
 <div class="desc"><ul>
-<li>@return bool|mixed</li>
+<li>@return dict</li>
 </ul></div>
 <details class="source">
 <summary>
@@ -4950,11 +5101,11 @@ will return "/dir1/dir2/index.php"</p>
 </summary>
 <pre><code class="python">def get_custom_variables_from_cookie(self):
     &#34;&#34;&#34;
-    * @return bool|mixed
+    * @return dict
     &#34;&#34;&#34;
     cookie = self.get_cookie_matching_name(&#34;cvar&#34;)
     if not cookie:
-        return False
+        return {}
 
     return json.loads(cookie)</code></pre>
 </details>
@@ -5091,9 +5242,9 @@ with the set_proxy() function returns a string, like "https://173.234.92.107:80"
             else f&#34;&amp;_id={self.get_visitor_id()}&#34;
         )
         + &#34;&amp;url=&#34;
-        + urlencode_plus(self.pageUrl)
+        + urlencode_plus(self.pageUrl or &#34;&#34;)
         + &#34;&amp;urlref=&#34;
-        + urlencode_plus(self.urlReferrer)
+        + urlencode_plus(self.urlReferrer or &#34;&#34;)
         + (
             f&#34;&amp;cs={self.pageCharset}&#34;
             if (
@@ -5131,6 +5282,7 @@ with the set_proxy() function returns a string, like "https://173.234.92.107:80"
         + custom_fields
         + custom_dimensions
         + (&#34;&amp;send_image=0&#34; if not self.sendImageResponse else &#34;&#34;)
+        + (f&#34;&amp;uadata={urlencode_plus(json.dumps(self.clientHints))}&#34; if self.clientHints else &#34;&#34;)
         + self.DEBUG_APPEND_URL
     )
 
@@ -5889,6 +6041,76 @@ using the visitor's IP address (if configured to do so).</p>
     * @return self
     &#34;&#34;&#34;
     self.city = city
+    return self</code></pre>
+</details>
+</dd>
+<dt id="src.matomo.tracker.MatomoTracker.set_client_hints"><code class="name flex">
+<span>def <span class="ident">set_client_hints</span></span>(<span>self, model='', platform='', platformVersion='', fullVersionList='', uaFullVersion='')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Sets the client hints, used to detect OS and browser.
+If this function is not called, the client hints sent with the current request will be used.</p>
+<p>Supported as of Matomo 4.12.0</p>
+<ul>
+<li>@param str model
+Value of the header 'HTTP_SEC_CH_UA_MODEL'</li>
+<li>@param str platform
+Value of the header 'HTTP_SEC_CH_UA_PLATFORM'</li>
+<li>@param str platformVersion
+Value of the header 'HTTP_SEC_CH_UA_PLATFORM_VERSION'</li>
+<li>@param str|list fullVersionList Value of header 'HTTP_SEC_CH_UA_FULL_VERSION_LIST'
+or a dict containing all brands with the structure
+[{'brand': 'Chrome', 'version' =&gt; '10.0.2'], {'brand': '&hellip;]</li>
+<li>@param str uaFullVersion
+Value of the header 'HTTP_SEC_CH_UA_FULL_VERSION'</li>
+<li>@return self</li>
+</ul></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_client_hints(self, model = &#39;&#39;, platform = &#39;&#39;, platformVersion = &#39;&#39;, fullVersionList = &#39;&#39;, uaFullVersion = &#39;&#39;):
+    &#34;&#34;&#34;
+    Sets the client hints, used to detect OS and browser.
+    If this function is not called, the client hints sent with the current request will be used.
+
+    Supported as of Matomo 4.12.0
+
+    * @param str model  Value of the header &#39;HTTP_SEC_CH_UA_MODEL&#39;
+    * @param str platform  Value of the header &#39;HTTP_SEC_CH_UA_PLATFORM&#39;
+    * @param str platformVersion  Value of the header &#39;HTTP_SEC_CH_UA_PLATFORM_VERSION&#39;
+    * @param str|list fullVersionList Value of header &#39;HTTP_SEC_CH_UA_FULL_VERSION_LIST&#39;
+                    or a dict containing all brands with the structure
+                    [{&#39;brand&#39;: &#39;Chrome&#39;, &#39;version&#39; =&gt; &#39;10.0.2&#39;], {&#39;brand&#39;: &#39;...]
+    * @param str uaFullVersion  Value of the header &#39;HTTP_SEC_CH_UA_FULL_VERSION&#39;
+    * @return self
+    &#34;&#34;&#34;
+    if is_str(fullVersionList):
+        regex = re.compile(&#34;^\&#34;([^\&#34;]+?)\&#34;; ?v=\&#34;([^\&#34;]+?)\&#34;(?:, )?&#34;)
+        l = []
+
+        match = re.search(regex, fullVersionList)
+        while match:
+            brand, version = re.findall(regex, fullVersionList)[0]
+            l.append({
+                &#34;brand&#34;: brand,
+                &#34;version&#34;: version
+            })
+
+            start, end = match.span()
+            fullVersionList = fullVersionList[end:]
+            match = re.search(regex, fullVersionList)
+
+        fullVersionList = l
+    elif not is_list(fullVersionList):
+        fullVersionList = []
+    self.clientHints = {
+        &#34;model&#34;: model,
+        &#34;platform&#34;: platform,
+        &#34;platformVersion&#34;: platformVersion,
+        &#34;uaFullVersion&#34;: uaFullVersion,
+        &#34;fullVersionList&#34;: fullVersionList
+    }
     return self</code></pre>
 </details>
 </dd>
@@ -6939,7 +7161,7 @@ If this function is not called, the User Agent will default to the current user 
 fingerprinting attributes, force the action to be recorded for a particular visitor.</p>
 <p>If not set, the visitor ID will be fetched from the 1st party cookie, or will be set to a random UUID.</p>
 <ul>
-<li>@param str visitor_id 16 hexadecimal characters visitor ID, eg. "33c31e01394bdc63"</li>
+<li>@param str visitor_id 16 hexadecimal characters visitor ID, e.g. "33c31e01394bdc63"</li>
 <li>@return self</li>
 <li>@throws Exception</li>
 </ul></div>
@@ -6956,7 +7178,7 @@ fingerprinting attributes, force the action to be recorded for a particular visi
 
     If not set, the visitor ID will be fetched from the 1st party cookie, or will be set to a random UUID.
 
-    * @param str visitor_id 16 hexadecimal characters visitor ID, eg. &#34;33c31e01394bdc63&#34;
+    * @param str visitor_id 16 hexadecimal characters visitor ID, e.g. &#34;33c31e01394bdc63&#34;
     * @return self
     * @throws Exception
     &#34;&#34;&#34;
@@ -6994,6 +7216,7 @@ fingerprinting attributes, force the action to be recorded for a particular visi
 <li><code><a title="src.matomo.tracker.is_int" href="#src.matomo.tracker.is_int">is_int</a></code></li>
 <li><code><a title="src.matomo.tracker.is_list" href="#src.matomo.tracker.is_list">is_list</a></code></li>
 <li><code><a title="src.matomo.tracker.is_numeric" href="#src.matomo.tracker.is_numeric">is_numeric</a></code></li>
+<li><code><a title="src.matomo.tracker.is_str" href="#src.matomo.tracker.is_str">is_str</a></code></li>
 <li><code><a title="src.matomo.tracker.strpos" href="#src.matomo.tracker.strpos">strpos</a></code></li>
 <li><code><a title="src.matomo.tracker.strspn" href="#src.matomo.tracker.strspn">strspn</a></code></li>
 <li><code><a title="src.matomo.tracker.urlencode_plus" href="#src.matomo.tracker.urlencode_plus">urlencode_plus</a></code></li>
@@ -7018,6 +7241,7 @@ fingerprinting attributes, force the action to be recorded for a particular visi
 <li><code><a title="src.matomo.tracker.MatomoTracker.clear_custom_variables" href="#src.matomo.tracker.MatomoTracker.clear_custom_variables">clear_custom_variables</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.clear_performance_timings" href="#src.matomo.tracker.MatomoTracker.clear_performance_timings">clear_performance_timings</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.delete_cookies" href="#src.matomo.tracker.MatomoTracker.delete_cookies">delete_cookies</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.disable_bulk_tracking" href="#src.matomo.tracker.MatomoTracker.disable_bulk_tracking">disable_bulk_tracking</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.disable_cookie_support" href="#src.matomo.tracker.MatomoTracker.disable_cookie_support">disable_cookie_support</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.disable_send_image_response" href="#src.matomo.tracker.MatomoTracker.disable_send_image_response">disable_send_image_response</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.do_bulk_track" href="#src.matomo.tracker.MatomoTracker.do_bulk_track">do_bulk_track</a></code></li>
@@ -7076,6 +7300,7 @@ fingerprinting attributes, force the action to be recorded for a particular visi
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_browser_has_cookies" href="#src.matomo.tracker.MatomoTracker.set_browser_has_cookies">set_browser_has_cookies</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_browser_language" href="#src.matomo.tracker.MatomoTracker.set_browser_language">set_browser_language</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_city" href="#src.matomo.tracker.MatomoTracker.set_city">set_city</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_client_hints" href="#src.matomo.tracker.MatomoTracker.set_client_hints">set_client_hints</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_cookie" href="#src.matomo.tracker.MatomoTracker.set_cookie">set_cookie</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_cookie_response" href="#src.matomo.tracker.MatomoTracker.set_cookie_response">set_cookie_response</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_country" href="#src.matomo.tracker.MatomoTracker.set_country">set_country</a></code></li>

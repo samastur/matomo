@@ -79,13 +79,14 @@ class Matomo(MatomoTracker):
             self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
             self.user_agent = &#34;&#34;
+            self.clientHints = {}
             self.accept_language = &#34;&#34;
 
             return True
 
         force_post_url_encoded = False
         if not self.doBulkRequests:
-            if self.request_method.upper() == &#34;POST&#34;:
+            if self.request_method and self.request_method.upper() == &#34;POST&#34;:
                 url, data = url.split(&#34;?&#34;)
                 force_post_url_encoded = True
                 method = &#34;POST&#34;
@@ -309,13 +310,14 @@ If set, will overwrite MatomoTracker.URL</li>
             self.clear_custom_dimensions()
             self.clear_custom_tracking_parameters()
             self.user_agent = &#34;&#34;
+            self.clientHints = {}
             self.accept_language = &#34;&#34;
 
             return True
 
         force_post_url_encoded = False
         if not self.doBulkRequests:
-            if self.request_method.upper() == &#34;POST&#34;:
+            if self.request_method and self.request_method.upper() == &#34;POST&#34;:
                 url, data = url.split(&#34;?&#34;)
                 force_post_url_encoded = True
                 method = &#34;POST&#34;
@@ -429,13 +431,14 @@ If set, will overwrite MatomoTracker.URL</li>
         self.clear_custom_dimensions()
         self.clear_custom_tracking_parameters()
         self.user_agent = &#34;&#34;
+        self.clientHints = {}
         self.accept_language = &#34;&#34;
 
         return True
 
     force_post_url_encoded = False
     if not self.doBulkRequests:
-        if self.request_method.upper() == &#34;POST&#34;:
+        if self.request_method and self.request_method.upper() == &#34;POST&#34;:
             url, data = url.split(&#34;?&#34;)
             force_post_url_encoded = True
             method = &#34;POST&#34;
@@ -526,6 +529,7 @@ If set, will overwrite MatomoTracker.URL</li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.clear_custom_variables" href="tracker.html#src.matomo.tracker.MatomoTracker.clear_custom_variables">clear_custom_variables</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.clear_performance_timings" href="tracker.html#src.matomo.tracker.MatomoTracker.clear_performance_timings">clear_performance_timings</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.delete_cookies" href="tracker.html#src.matomo.tracker.MatomoTracker.delete_cookies">delete_cookies</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.disable_bulk_tracking" href="tracker.html#src.matomo.tracker.MatomoTracker.disable_bulk_tracking">disable_bulk_tracking</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.disable_cookie_support" href="tracker.html#src.matomo.tracker.MatomoTracker.disable_cookie_support">disable_cookie_support</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.disable_send_image_response" href="tracker.html#src.matomo.tracker.MatomoTracker.disable_send_image_response">disable_send_image_response</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.do_bulk_track" href="tracker.html#src.matomo.tracker.MatomoTracker.do_bulk_track">do_bulk_track</a></code></li>
@@ -580,6 +584,7 @@ If set, will overwrite MatomoTracker.URL</li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_browser_has_cookies" href="tracker.html#src.matomo.tracker.MatomoTracker.set_browser_has_cookies">set_browser_has_cookies</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_browser_language" href="tracker.html#src.matomo.tracker.MatomoTracker.set_browser_language">set_browser_language</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_city" href="tracker.html#src.matomo.tracker.MatomoTracker.set_city">set_city</a></code></li>
+<li><code><a title="src.matomo.tracker.MatomoTracker.set_client_hints" href="tracker.html#src.matomo.tracker.MatomoTracker.set_client_hints">set_client_hints</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_cookie" href="tracker.html#src.matomo.tracker.MatomoTracker.set_cookie">set_cookie</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_cookie_response" href="tracker.html#src.matomo.tracker.MatomoTracker.set_cookie_response">set_cookie_response</a></code></li>
 <li><code><a title="src.matomo.tracker.MatomoTracker.set_country" href="tracker.html#src.matomo.tracker.MatomoTracker.set_country">set_country</a></code></li>
