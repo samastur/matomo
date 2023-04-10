@@ -14,8 +14,10 @@ def urlencode_plus(s):
         return quote(s)
     elif type(s) == dict:
         return urlencode(s)
+    elif type(s) == int:
+        return str(s)
     else:
-        raise TypeError("urlencode_plus works only on strings and dicts.", s)
+        raise TypeError("urlencode_plus works only on strings, integers and dicts.", s)
 
 
 #
@@ -121,7 +123,7 @@ class MatomoTracker:
         self.request_method = "GET"
         self.response = None
         self.ecommerceItems = []
-        self.attributionInfo = []
+        self.attributionInfo = None
         self.eventCustomVar = {}
         self.forcedDatetime = ""
         self.forcedNewVisit = False
@@ -442,7 +444,7 @@ class MatomoTracker:
         * @return self
         * @throws Exception
         """
-        regex = re.compile("/^dimension([0-9]+)$/")
+        regex = re.compile("^dimension([0-9]+)$")
         matches = re.findall(regex, tracking_api_parameter)
         if len(matches):
             # Unlike PHP preg_match it returns captured subpattern as first element
@@ -1451,7 +1453,7 @@ class MatomoTracker:
         when using POST to prevent the loss of POST values. When using Log Analytics,
         be aware that POST requests are not parseable/replayable.
 
-        * @param str method. Either 'POST' or 'get'
+        * @param str method. Either 'POST' or 'GET'
         * @return self
         """
         self.request_method = "POST" if method.upper() == "POST" else "GET"
@@ -1797,25 +1799,16 @@ class MatomoTracker:
         * @return string
         """
         cookie_expire = self.currentTs + cookie_ttl
-        cookie_header = (
-            f"Set-Cookie: {urlencode_plus(cookie_name)}={urlencode_plus(cookie_value)}"(
-                f"; expires='{time.strftime('%a, %d-%m-%Y %H:%M:%S', cookie_expire)} GMT"
-                if cookie_expire
-                else ""
-            )(f"; path='{self.configCookiePath}" if self.configCookiePath else "")(
-                f"; domain='{self.configCookieDomain}"
-                if self.configCookieDomain
-                else ""
-            )(
-                f"; secure" if self.configCookieSecure else ""
-            )(
-                f"; HttpOnly" if self.configCookieHTTPOnly else ""
-            )(
-                f"; SameSite={urlencode_plus(self.configCookieSameSite)}"
-                if self.configCookieSameSite
-                else ""
-            )
-        )
+        cookie_name = urlencode_plus(cookie_name)
+        cookie_value = urlencode_plus(cookie_value)
+        expires = f"; expires='{time.strftime('%a, %d-%m-%Y %H:%M:%S', time.gmtime(cookie_expire))} GMT" if cookie_expire else ""
+        path = f"; path={self.configCookiePath}" if self.configCookiePath else ""
+        domain = f"; domain={self.configCookieDomain}" if self.configCookieDomain else ""
+        secure = "; secure" if self.configCookieSecure else ""
+        http_only = "; HttpOnly" if self.configCookieHTTPOnly else ""
+        same_site = f"; SameSite={urlencode_plus(self.configCookieSameSite)}" if self.configCookieSameSite else ""
+
+        cookie_header = f"Set-Cookie: {cookie_name}={cookie_value}{expires}{path}{domain}{secure}{http_only}{same_site}"
         return cookie_header
 
     def set_cookie(self, cookie_name, cookie_value, cookie_ttl):
@@ -1917,7 +1910,7 @@ class MatomoTracker:
             header_name_length = len(header_name)
 
             for header in headers:
-                if strpos(header.lower(), header_name) != 0:
+                if strpos(header.lower(), header_name) is False:
                     continue
                 cookies = header[header_name_length:].strip()
                 pos_end = strpos(cookies, ";")
