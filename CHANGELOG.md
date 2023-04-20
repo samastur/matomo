@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.4
+
+* a few minor fixes uncovered by new tracker tests
+
+
 ## 0.7.3
 
 * updated to the latest Matomo tracker (version 5)

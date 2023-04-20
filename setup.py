@@ -35,7 +35,7 @@ INSTALL_REQUIRES = [
 
 AUTHOR = "Marko Samastur"
 AUTHOR_EMAIL = "matomo@markos.gaivo.net"
-VERSION = "0.7.3"
+VERSION = "0.7.4"
 LICENSE = "MIT"
 URL = "https://github.com/samastur/matomo"
 DESCRIPTION = "Python Matomo client API"
