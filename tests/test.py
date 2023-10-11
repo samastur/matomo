@@ -7,7 +7,9 @@ import requests
 import matomo
 import matomo.request as request
 
-from config import MATOMO_SITE_ID, MATOMO_TRACKING_API_URL, HOST, REMOTE_ADDR
+from config import (
+    MATOMO_SITE_ID, MATOMO_TRACKING_API_URL, HOST, REMOTE_ADDR
+)
 
 
 class TestCookieJar(http.cookiejar.MozillaCookieJar, requests.cookies.RequestsCookieJar):
@@ -49,3 +51,4 @@ for i, data in enumerate([request_data, request_data2]):
     tracker.do_track_page_view("Fake Matomo Test Url {}".format(i+1))
     tracker.request.cookie.save(ignore_discard=True)
     time.sleep(1)
+

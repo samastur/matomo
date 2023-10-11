@@ -14,28 +14,30 @@ PROJECT_URLS = {
     "Source Code": "https://github.com/samastur/matomo",
 }
 CLASSIFIERS = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Web Environment",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 INSTALL_REQUIRES = [
-    "requests>=2.*"
+    "requests>=2"
 ]
 
 ###############################################################################
 
 AUTHOR = "Marko Samastur"
 AUTHOR_EMAIL = "matomo@markos.gaivo.net"
-VERSION = "0.7.4"
+VERSION = "1.0.0"
 LICENSE = "MIT"
 URL = "https://github.com/samastur/matomo"
 DESCRIPTION = "Python Matomo client API"

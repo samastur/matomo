@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0
+
+* minor cleanups
+
 ## 0.7.4
 
 * a few minor fixes uncovered by new tracker tests

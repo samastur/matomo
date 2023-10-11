@@ -19,11 +19,17 @@ request data:
     QUERY_STRING
     REMOTE_ADDR
 
+    HTTP_SEC_CH_UA_MODEL
+    HTTP_SEC_CH_UA_PLATFORM
+    HTTP_SEC_CH_UA_PLATFORM_VERSION
+    HTTP_SEC_CH_UA_FULL_VERSION_LIST
+    HTTP_SEC_CH_UA_FULL_VERSION
+
     PATH_INFO
     REQUEST_URI
     SCRIPT_NAME
 
-    Last 3 are used to determine the request's path if order of precedence
+    Last 3 are used to determine the request's path in order of precedence
     (SCRIPT_NAME is used only if both PATH_INFO and REQUEST_URI are missing/empty)
 
 """
