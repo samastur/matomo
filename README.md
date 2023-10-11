@@ -9,7 +9,10 @@ not been extensively tested yet. 100% compatibility is not possible because of
 differences between PHP running environment and Python's.
 
 Check `/tests` and `/examples` folders for examples on how to use it or `/docs`
-to read its API documentation. Better documentation is coming soon.
+to read its API documentation.
+
+API Reference and User Guide available on
+[Read the Docs](https://matomo.readthedocs.io/en/latest/).
 
 ### Differences with PHP version
 
